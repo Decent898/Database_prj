@@ -12,6 +12,13 @@ class Signature(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
     is_public = models.BooleanField(default=True, help_text='设置为公开以在签名墙上显示')
     
+    # 动态签名墙的位置和样式属性
+    position_x = models.FloatField(default=0, help_text='签名在墙上的X坐标')
+    position_y = models.FloatField(default=0, help_text='签名在墙上的Y坐标')
+    rotation = models.IntegerField(default=0, help_text='签名的旋转角度(0-360)')
+    scale = models.FloatField(default=1.0, help_text='签名的缩放比例')
+    z_index = models.IntegerField(default=1, help_text='签名的层叠顺序')
+    
     class Meta:
         ordering = ['-created_at']
     
