@@ -73,7 +73,7 @@
 
 1. **克隆项目**
 ```bash
-git clone https://github.com/你的用户名/signature_wall.git
+git clone hhttps://github.com/Decent898/Database_prj.git
 cd signature_wall
 ```
 
@@ -193,52 +193,11 @@ bash start_production_server.sh
 bash start_public_with_ngrok.sh
 ```
 
-#### 方法二: 使用Docker部署 (需自行创建Dockerfile)
-
-```bash
-# 构建Docker镜像
-docker build -t signature-wall .
-
-# 运行Docker容器
-docker run -d -p 8000:8000 --name signature-wall-app signature-wall
-```
-
-#### 方法三: 使用Nginx + Gunicorn部署
-
-1. **安装并配置Gunicorn**
-```bash
-# 启动Gunicorn
-gunicorn --bind 0.0.0.0:8000 signature_wall.wsgi:application
-```
-
-2. **Nginx配置示例**
-```nginx
-server {
-    listen 80;
-    server_name yourdomain.com;
-
-    location /static/ {
-        root /path/to/your/project;
-    }
-
-    location /media/ {
-        root /path/to/your/project;
-    }
-
-    location / {
-        proxy_pass http://127.0.0.1:8000;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-    }
-}
-```
-
 有关如何在公网上安全部署的详细说明，请参阅 [PUBLIC_ACCESS.md](PUBLIC_ACCESS.md) 文件。
 
 ## 项目结构
 
-```
-signature_wall/
+Database_prj/
 ├── accounts/           # 用户认证和个人资料管理
 │   ├── migrations/     # 数据库迁移文件
 │   ├── templates/      # 用户相关模板
