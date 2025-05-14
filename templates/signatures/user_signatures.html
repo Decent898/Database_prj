@@ -1,0 +1,72 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ username }}的签名 - 签名墙{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>{{ username }}的签名</h2>
+    <a href="{% url 'user_profile' username %}" class="btn btn-outline-primary">查看用户主页</a>
+</div>
+
+<div class="row">
+    {% if signatures %}
+        {% for signature in signatures %}
+            <div class="col-md-3 mb-4">
+                <div class="card h-100">
+                    <a href="{% url 'signature_detail' signature.id %}">
+                        <img src="{{ signature.image.url }}" class="card-img-top" alt="{{ signature.title }}">
+                    </a>
+                    <div class="card-body">
+                        <h5 class="card-title">{{ signature.title }}</h5>
+                        <p class="card-text">
+                            <small class="text-muted">{{ signature.created_at|date:"Y-m-d" }}</small>
+                        </p>
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    {% else %}
+        <div class="col-12 text-center py-5">
+            <h3>该用户暂无公开签名</h3>
+            <a href="{% url 'signature_list' %}" class="btn btn-outline-primary mt-3">返回签名墙</a>
+        </div>
+    {% endif %}
+</div>
+
+<!-- 分页 -->
+{% if is_paginated %}
+    <nav aria-label="签名分页" class="mt-4">
+        <ul class="pagination justify-content-center">
+            {% if page_obj.has_previous %}
+                <li class="page-item">
+                    <a class="page-link" href="?page=1">&laquo;&laquo;</a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.previous_page_number }}">&laquo;</a>
+                </li>
+            {% endif %}
+
+            {% for num in page_obj.paginator.page_range %}
+                {% if page_obj.number == num %}
+                    <li class="page-item active">
+                        <span class="page-link">{{ num }}</span>
+                    </li>
+                {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+                    </li>
+                {% endif %}
+            {% endfor %}
+
+            {% if page_obj.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.next_page_number }}">&raquo;</a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}">&raquo;&raquo;</a>
+                </li>
+            {% endif %}
+        </ul>
+    </nav>
+{% endif %}
+{% endblock %}

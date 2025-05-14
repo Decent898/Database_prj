@@ -1,0 +1,55 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+
+{% block title %}个人资料 - 签名墙{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-4 mb-4">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h5 class="card-title mb-0">{{ user.username }}的个人信息</h5>
+            </div>
+            <div class="card-body text-center">
+                <img src="{{ user.profile.profile_pic.url }}" alt="{{ user.username }}的头像" 
+                     class="rounded-circle img-fluid mb-3" style="max-width: 150px;">
+                <h5>{{ user.username }}</h5>
+                <p class="text-muted">{{ user.email }}</p>
+                {% if user.profile.bio %}
+                    <p>{{ user.profile.bio }}</p>
+                {% endif %}
+                {% if user.profile.website %}
+                    <a href="{{ user.profile.website }}" target="_blank" class="btn btn-sm btn-outline-primary">个人网站</a>
+                {% endif %}
+            </div>
+        </div>
+        <div class="mt-4">
+            <a href="{% url 'my_signatures' %}" class="btn btn-outline-primary w-100 mb-2">我的签名</a>
+            <a href="{% url 'my_posts' %}" class="btn btn-outline-success w-100">我的文章</a>
+        </div>
+    </div>
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h5 class="card-title mb-0">编辑个人资料</h5>
+            </div>
+            <div class="card-body">
+                <form method="POST" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    <fieldset class="mb-3">
+                        <legend class="border-bottom mb-3">用户信息</legend>
+                        {{ u_form|crispy }}
+                    </fieldset>
+                    <fieldset class="mb-3">
+                        <legend class="border-bottom mb-3">个人资料</legend>
+                        {{ p_form|crispy }}
+                    </fieldset>
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary">保存修改</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

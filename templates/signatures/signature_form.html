@@ -1,0 +1,37 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+
+{% block title %}上传签名 - 签名墙{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h3 class="card-title mb-0">上传新签名</h3>
+            </div>
+            <div class="card-body">
+                <form method="POST" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    {{ form|crispy }}
+                    <div class="mt-3">
+                        <button type="submit" class="btn btn-primary">上传</button>
+                        <a href="{% url 'my_signatures' %}" class="btn btn-outline-secondary">取消</a>
+                    </div>
+                </form>
+            </div>
+            <div class="card-footer">
+                <div class="alert alert-info mb-0">
+                    <h5 class="alert-heading">上传提示:</h5>
+                    <ul class="mb-0">
+                        <li>签名图片推荐使用透明背景的PNG格式</li>
+                        <li>为了最佳显示效果，建议图片尺寸不小于500x200像素</li>
+                        <li>设置为公开的签名将显示在签名墙上</li>
+                        <li>您可以将签名关联到您的博客文章</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

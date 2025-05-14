@@ -1,0 +1,13 @@
+{% extends 'base.html' %}
+
+{% block title %}退出登录 - 签名墙{% endblock %}
+
+{% block content %}
+<div class="text-center py-5">
+    <h2>您已成功退出登录</h2>
+    <div class="mt-4">
+        <a href="{% url 'login' %}" class="btn btn-primary">重新登录</a>
+        <a href="{% url 'home' %}" class="btn btn-outline-primary">返回首页</a>
+    </div>
+</div>
+{% endblock %}

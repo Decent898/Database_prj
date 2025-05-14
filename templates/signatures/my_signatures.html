@@ -1,0 +1,56 @@
+{% extends 'base.html' %}
+
+{% block title %}我的签名 - 签名墙{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>我的签名</h2>
+    <a href="{% url 'create_signature' %}" class="btn btn-primary">上传新签名</a>
+</div>
+
+<div class="row">
+    {% if signatures %}
+        {% for signature in signatures %}
+            <div class="col-md-4 mb-4">
+                <div class="card h-100">
+                    <div class="position-absolute top-0 end-0 p-2">
+                        {% if signature.is_public %}
+                            <span class="badge bg-success">公开</span>
+                        {% else %}
+                            <span class="badge bg-secondary">私密</span>
+                        {% endif %}
+                    </div>
+                    
+                    <a href="{% url 'signature_detail' signature.id %}">
+                        <img src="{{ signature.image.url }}" class="card-img-top" alt="{{ signature.title }}">
+                    </a>
+                    
+                    <div class="card-body">
+                        <h5 class="card-title">{{ signature.title }}</h5>
+                        <p class="card-text">
+                            <small class="text-muted">上传于 {{ signature.created_at|date:"Y-m-d" }}</small>
+                        </p>
+                        {% if signature.description %}
+                            <p class="card-text">{{ signature.description|truncatechars:50 }}</p>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="card-footer bg-transparent border-top-0">
+                        <div class="btn-group btn-group-sm w-100">
+                            <a href="{% url 'update_signature' signature.id %}" class="btn btn-outline-primary">编辑</a>
+                            <a href="{% url 'signature_detail' signature.id %}" class="btn btn-outline-secondary">查看</a>
+                            <a href="{% url 'delete_signature' signature.id %}" class="btn btn-outline-danger">删除</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    {% else %}
+        <div class="col-12 text-center py-5">
+            <h3>您还没有上传过签名</h3>
+            <p class="text-muted">上传您的第一个签名，并与他人分享</p>
+            <a href="{% url 'create_signature' %}" class="btn btn-primary mt-3">上传签名</a>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

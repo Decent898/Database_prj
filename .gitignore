@@ -1,0 +1,92 @@
+# Django项目的.gitignore
+
+# Python字节码文件
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# 包和发布相关
+env/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# 虚拟环境
+venv/
+ENV/
+env/
+.venv/
+
+# Django相关
+*.log
+local_settings.py
+db.sqlite3
+db.sqlite3-journal
+
+# 如果你使用PostgreSQL
+*.psql
+
+# 静态文件收集目录
+/staticfiles/
+
+# 上传的媒体文件（但保留media目录结构）
+/media/*
+!/media/.gitkeep
+
+# 系统相关
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+
+# IDE相关
+.idea/
+.vscode/
+*.sublime-workspace
+*.sublime-project
+
+# 环境变量和配置
+.env
+.env.local
+.env.development
+.env.production
+
+# 部署相关
+*.pid
+*.socket
+gunicorn.conf.py
+
+# 项目特定文件
+pf_rules.conf
+initialize.sh
+macos_port_setup.sh
+setup_initial_data.sh
+setup_media.sh
+start_production_server.sh
+start_public_server.sh
+start_public_with_ngrok.sh
+
+# 不要忽略.gitignore自身
+!.gitignore
+!.github/
+
+# 测试覆盖率
+.coverage
+htmlcov/
+.tox/
+.pytest_cache/
+coverage.xml
+*.cover

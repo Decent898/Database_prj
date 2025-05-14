@@ -1,0 +1,86 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ profile_user.username }}的主页 - 签名墙{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-4 mb-4">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h5 class="card-title mb-0">用户信息</h5>
+            </div>
+            <div class="card-body text-center">
+                <img src="{{ profile_user.profile.profile_pic.url }}" alt="{{ profile_user.username }}的头像" 
+                     class="rounded-circle img-fluid mb-3" style="max-width: 150px;">
+                <h4>{{ profile_user.username }}</h4>
+                {% if profile_user.profile.bio %}
+                    <p class="text-muted">{{ profile_user.profile.bio }}</p>
+                {% endif %}
+                {% if profile_user.profile.website %}
+                    <a href="{{ profile_user.profile.website }}" target="_blank" class="btn btn-sm btn-outline-primary">个人网站</a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-8">
+        <div class="card mb-4">
+            <div class="card-header bg-primary text-white">
+                <h5 class="card-title mb-0">{{ profile_user.username }}的签名作品</h5>
+            </div>
+            <div class="card-body">
+                {% if signatures %}
+                    <div class="row">
+                        {% for signature in signatures|slice:":3" %}
+                            <div class="col-md-4 mb-3">
+                                <div class="card h-100">
+                                    <a href="{% url 'signature_detail' signature.id %}">
+                                        <img src="{{ signature.image.url }}" alt="{{ signature.title }}" class="card-img-top">
+                                    </a>
+                                    <div class="card-body">
+                                        <h6 class="card-title">{{ signature.title }}</h6>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                    {% if signatures.count > 3 %}
+                        <div class="text-center mt-3">
+                            <a href="{% url 'user_signatures' profile_user.username %}" class="btn btn-outline-primary">查看全部签名</a>
+                        </div>
+                    {% endif %}
+                {% else %}
+                    <p class="text-center text-muted">暂无公开签名作品</p>
+                {% endif %}
+            </div>
+        </div>
+        
+        <div class="card">
+            <div class="card-header bg-success text-white">
+                <h5 class="card-title mb-0">{{ profile_user.username }}的文章</h5>
+            </div>
+            <div class="card-body">
+                {% if posts %}
+                    <div class="list-group">
+                        {% for post in posts|slice:":5" %}
+                            <a href="{% url 'post_detail' post.id post.slug %}" class="list-group-item list-group-item-action">
+                                <div class="d-flex w-100 justify-content-between">
+                                    <h6 class="mb-1">{{ post.title }}</h6>
+                                    <small class="text-muted">{{ post.published_date|date:"Y-m-d" }}</small>
+                                </div>
+                            </a>
+                        {% endfor %}
+                    </div>
+                    {% if posts.count > 5 %}
+                        <div class="text-center mt-3">
+                            <a href="{% url 'user_posts' profile_user.username %}" class="btn btn-outline-success">查看全部文章</a>
+                        </div>
+                    {% endif %}
+                {% else %}
+                    <p class="text-center text-muted">暂无公开文章</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

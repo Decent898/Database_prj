@@ -1,0 +1,91 @@
+{% extends 'base.html' %}
+
+{% block title %}签名墙{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>签名墙</h2>
+    {% if user.is_authenticated %}
+        <a href="{% url 'create_signature' %}" class="btn btn-primary">
+            <i class="fas fa-plus"></i> 上传新签名
+        </a>
+    {% endif %}
+</div>
+
+<div class="row">
+    {% if signatures %}
+        {% for signature in signatures %}
+            <div class="col-md-3 mb-4">
+                <div class="card h-100">
+                    <a href="{% url 'signature_detail' signature.id %}">
+                        <img src="{{ signature.image.url }}" class="card-img-top" alt="{{ signature.title }}">
+                    </a>
+                    <div class="card-body">
+                        <h5 class="card-title">{{ signature.title }}</h5>
+                        <p class="card-text text-muted">
+                            <a href="{% url 'user_profile' signature.user.username %}">{{ signature.user.username }}</a>
+                        </p>
+                        <p class="card-text">
+                            <small class="text-muted">{{ signature.created_at|date:"Y-m-d" }}</small>
+                        </p>
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    {% else %}
+        <div class="col-12 text-center py-5">
+            <h3>暂无签名作品</h3>
+            {% if user.is_authenticated %}
+                <a href="{% url 'create_signature' %}" class="btn btn-primary mt-3">成为第一个上传签名的人</a>
+            {% else %}
+                <p class="mt-3">请 <a href="{% url 'login' %}">登录</a> 或 <a href="{% url 'register' %}">注册</a> 后上传签名</p>
+            {% endif %}
+        </div>
+    {% endif %}
+</div>
+
+<!-- 分页 -->
+{% if is_paginated %}
+    <nav aria-label="签名分页" class="mt-4">
+        <ul class="pagination justify-content-center">
+            {% if page_obj.has_previous %}
+                <li class="page-item">
+                    <a class="page-link" href="?page=1" aria-label="首页">
+                        <span aria-hidden="true">&laquo;&laquo;</span>
+                    </a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.previous_page_number }}" aria-label="上一页">
+                        <span aria-hidden="true">&laquo;</span>
+                    </a>
+                </li>
+            {% endif %}
+
+            {% for num in page_obj.paginator.page_range %}
+                {% if page_obj.number == num %}
+                    <li class="page-item active">
+                        <span class="page-link">{{ num }}</span>
+                    </li>
+                {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+                    </li>
+                {% endif %}
+            {% endfor %}
+
+            {% if page_obj.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.next_page_number }}" aria-label="下一页">
+                        <span aria-hidden="true">&raquo;</span>
+                    </a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}" aria-label="末页">
+                        <span aria-hidden="true">&raquo;&raquo;</span>
+                    </a>
+                </li>
+            {% endif %}
+        </ul>
+    </nav>
+{% endif %}
+{% endblock %}

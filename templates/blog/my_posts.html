@@ -1,0 +1,73 @@
+{% extends 'base.html' %}
+
+{% block title %}我的文章 - 博客{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>我的文章</h2>
+    <a href="{% url 'create_post' %}" class="btn btn-primary">创建新文章</a>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        {% if posts %}
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>标题</th>
+                            <th>状态</th>
+                            <th>创建日期</th>
+                            <th>发布日期</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for post in posts %}
+                            <tr>
+                                <td>
+                                    <a href="{% url 'post_detail' post.id post.slug %}">{{ post.title }}</a>
+                                </td>
+                                <td>
+                                    {% if post.is_published %}
+                                        <span class="badge bg-success">已发布</span>
+                                    {% else %}
+                                        <span class="badge bg-secondary">草稿</span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ post.created_date|date:"Y-m-d" }}</td>
+                                <td>
+                                    {% if post.published_date %}
+                                        {{ post.published_date|date:"Y-m-d" }}
+                                    {% else %}
+                                        -
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <div class="btn-group btn-group-sm">
+                                        <a href="{% url 'update_post' post.id post.slug %}" class="btn btn-outline-primary">
+                                            编辑
+                                        </a>
+                                        <a href="{% url 'post_detail' post.id post.slug %}" class="btn btn-outline-secondary">
+                                            查看
+                                        </a>
+                                        <a href="{% url 'delete_post' post.id post.slug %}" class="btn btn-outline-danger">
+                                            删除
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="text-center py-5">
+                <h3>您还没有创建任何文章</h3>
+                <p class="text-muted">创建您的第一篇文章，分享您的想法和故事</p>
+                <a href="{% url 'create_post' %}" class="btn btn-primary mt-3">创建文章</a>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
