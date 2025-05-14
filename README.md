@@ -74,7 +74,7 @@
 1. **克隆项目**
 ```bash
 git clone hhttps://github.com/Decent898/Database_prj.git
-cd signature_wall
+cd Database_prj
 ```
 
 2. **创建并激活虚拟环境**
