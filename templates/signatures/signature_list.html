@@ -2,32 +2,54 @@
 
 {% block title %}签名墙{% endblock %}
 
+{% block extra_css %}
+<link rel="stylesheet" href="/static/css/subpages.css">
+{% endblock %}
+
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <h2>签名墙</h2>
+<div class="page-header text-center">
+    <h1 class="display-5 fw-bold mb-3">探索精彩签名</h1>
+    <p class="lead mb-4">浏览各种风格的签名作品，感受书法的艺术魅力</p>
     {% if user.is_authenticated %}
-        <a href="{% url 'create_signature' %}" class="btn btn-primary">
-            <i class="fas fa-plus"></i> 上传新签名
+        <a href="{% url 'create_signature' %}" class="btn btn-light btn-hover-effect btn-lg">
+            <i class="fas fa-plus me-2"></i> 上传您的签名
         </a>
     {% endif %}
+</div>
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="fs-3"><i class="fas fa-signature me-2 text-primary"></i>签名墙</h2>
+    <div class="d-flex gap-2">
+        <a href="{% url 'signature_board' %}" class="btn btn-outline-primary btn-sm">
+            <i class="fas fa-th me-1"></i> 互动签名墙
+        </a>
+        {% if user.is_authenticated %}
+            <a href="{% url 'create_signature' %}" class="btn btn-primary btn-sm">
+                <i class="fas fa-plus me-1"></i> 上传新签名
+            </a>
+        {% endif %}
+    </div>
 </div>
 
 <div class="row">
     {% if signatures %}
         {% for signature in signatures %}
-            <div class="col-md-3 mb-4">
-                <div class="card h-100">
-                    <a href="{% url 'signature_detail' signature.id %}">
-                        <img src="{{ signature.image.url }}" class="card-img-top" alt="{{ signature.title }}">
-                    </a>
+            <div class="col-md-3 col-sm-6 mb-4 signature-item">
+                <div class="custom-card h-100 fade-in" style="animation-delay: {{ forloop.counter0|divisibleby:4 }}0ms">
+                    <div class="card-img-container signature-highlight">
+                        <img src="{{ signature.image.url }}" class="animate-load" alt="{{ signature.title }}">
+                    </div>
                     <div class="card-body">
-                        <h5 class="card-title">{{ signature.title }}</h5>
-                        <p class="card-text text-muted">
-                            <a href="{% url 'user_profile' signature.user.username %}">{{ signature.user.username }}</a>
-                        </p>
-                        <p class="card-text">
-                            <small class="text-muted">{{ signature.created_at|date:"Y-m-d" }}</small>
-                        </p>
+                        <h5 class="card-title fw-bold">{{ signature.title }}</h5>
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <a href="{% url 'user_profile' signature.user.username %}" class="text-decoration-none text-muted">
+                                <i class="fas fa-user me-1"></i> {{ signature.user.username }}
+                            </a>
+                            <small class="text-muted">
+                                <i class="far fa-calendar me-1"></i> {{ signature.created_at|date:"Y-m-d" }}
+                            </small>
+                        </div>
+                        <a href="{% url 'signature_detail' signature.id %}" class="btn btn-sm btn-outline-primary w-100 mt-2">查看详情</a>
                     </div>
                 </div>
             </div>
@@ -46,17 +68,17 @@
 
 <!-- 分页 -->
 {% if is_paginated %}
-    <nav aria-label="签名分页" class="mt-4">
-        <ul class="pagination justify-content-center">
+    <nav aria-label="签名分页" class="mt-5">
+        <ul class="pagination custom-pagination justify-content-center">
             {% if page_obj.has_previous %}
                 <li class="page-item">
                     <a class="page-link" href="?page=1" aria-label="首页">
-                        <span aria-hidden="true">&laquo;&laquo;</span>
+                        <i class="fas fa-angle-double-left"></i>
                     </a>
                 </li>
                 <li class="page-item">
                     <a class="page-link" href="?page={{ page_obj.previous_page_number }}" aria-label="上一页">
-                        <span aria-hidden="true">&laquo;</span>
+                        <i class="fas fa-angle-left"></i>
                     </a>
                 </li>
             {% endif %}
@@ -76,16 +98,20 @@
             {% if page_obj.has_next %}
                 <li class="page-item">
                     <a class="page-link" href="?page={{ page_obj.next_page_number }}" aria-label="下一页">
-                        <span aria-hidden="true">&raquo;</span>
+                        <i class="fas fa-angle-right"></i>
                     </a>
                 </li>
                 <li class="page-item">
                     <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}" aria-label="末页">
-                        <span aria-hidden="true">&raquo;&raquo;</span>
+                        <i class="fas fa-angle-double-right"></i>
                     </a>
                 </li>
             {% endif %}
         </ul>
     </nav>
 {% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script src="/static/js/subpages.js"></script>
 {% endblock %}

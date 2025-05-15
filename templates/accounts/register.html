@@ -3,25 +3,235 @@
 
 {% block title %}注册 - 签名墙{% endblock %}
 
+{% block extra_css %}
+<link rel="stylesheet" href="/static/css/subpages.css">
+<style>
+    .auth-container {
+        max-width: 550px;
+        margin: 0 auto;
+        padding: 30px 0;
+    }
+    
+    .auth-card {
+        border-radius: 15px;
+        overflow: hidden;
+        border: none;
+        box-shadow: 0 15px 30px rgba(0, 0, 0, 0.05);
+    }
+    
+    .auth-header {
+        padding: 30px;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .auth-header::before {
+        content: '';
+        position: absolute;
+        top: -10px;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: url('/static/images/pattern-dots.svg');
+        opacity: 0.1;
+    }
+    
+    .auth-icon {
+        width: 70px;
+        height: 70px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 20px;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.2);
+    }
+    
+    .form-floating > label {
+        padding-left: 20px;
+    }
+    
+    .form-floating > .form-control {
+        height: calc(3.5rem + 2px);
+        padding: 1rem 1.25rem;
+    }
+    
+    .social-login-btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 12px 16px;
+        border-radius: 10px;
+        margin-bottom: 10px;
+        font-weight: 500;
+        transition: all 0.3s ease;
+    }
+    
+    .social-login-btn i {
+        margin-right: 10px;
+        font-size: 20px;
+    }
+    
+    .login-divider {
+        display: flex;
+        align-items: center;
+        margin: 25px 0;
+    }
+    
+    .login-divider::before,
+    .login-divider::after {
+        content: '';
+        flex: 1;
+        height: 1px;
+        background: #e9ecef;
+    }
+    
+    .login-divider span {
+        padding: 0 15px;
+        color: #6c757d;
+    }
+    
+    .benefit-item {
+        display: flex;
+        align-items: center;
+        margin-bottom: 15px;
+    }
+    
+    .benefit-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background-color: rgba(108, 92, 231, 0.1);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 15px;
+        color: #6c5ce7;
+    }
+</style>
+{% endblock %}
+
 {% block content %}
-<div class="row justify-content-center">
-    <div class="col-md-6">
-        <div class="card">
-            <div class="card-header bg-primary text-white">
-                <h2 class="card-title mb-0">注册新账户</h2>
+<div class="container auth-container fade-in">
+    <div class="text-center mb-4">
+        <h1 class="fw-bold text-purple">加入签名墙</h1>
+        <p class="text-muted">创建账户，开始您的签名艺术之旅</p>
+    </div>
+    
+    <div class="row">
+        <!-- 注册表单 -->
+        <div class="col-lg-7">
+            <div class="card auth-card">
+                <div class="auth-header gradient-header">
+                    <div class="auth-icon">
+                        <i class="fas fa-user-plus fa-2x text-white"></i>
+                    </div>
+                    <h2 class="card-title text-center text-white mb-0">注册新账户</h2>
+                </div>
+                <div class="card-body p-4">
+                    <form method="POST" class="fade-in" style="animation-delay: 200ms;">
+                        {% csrf_token %}
+                        {{ form|crispy }}
+                        
+                        <div class="form-check mt-3">
+                            <input class="form-check-input" type="checkbox" id="terms" required>
+                            <label class="form-check-label" for="terms">
+                                我同意<a href="#" class="text-purple">服务条款</a>和<a href="#" class="text-purple">隐私政策</a>
+                            </label>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-purple btn-hover-effect w-100 py-3 mt-4">
+                            <i class="fas fa-user-plus"></i> 创建账户
+                        </button>
+                    </form>
+                    
+                    <div class="login-divider">
+                        <span>或者使用社交账号</span>
+                    </div>
+                    
+                    <div class="social-login">
+                        <div class="row">
+                            <div class="col-6">
+                                <a href="#" class="btn btn-light social-login-btn w-100">
+                                    <i class="fab fa-google text-danger"></i> Google
+                                </a>
+                            </div>
+                            <div class="col-6">
+                                <a href="#" class="btn btn-light social-login-btn w-100">
+                                    <i class="fab fa-github text-dark"></i> GitHub
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer bg-white py-3 text-center border-0">
+                    <p class="mb-0">已有账户？ 
+                        <a href="{% url 'login' %}" class="text-purple fw-bold text-decoration-none">立即登录</a>
+                    </p>
+                </div>
             </div>
-            <div class="card-body">
-                <form method="POST">
-                    {% csrf_token %}
-                    {{ form|crispy }}
-                    <button type="submit" class="btn btn-primary mt-3">注册</button>
-                </form>
-                <hr>
-                <div class="text-center">
-                    <p>已有账户？ <a href="{% url 'login' %}">登录</a></p>
+        </div>
+        
+        <!-- 右侧介绍 -->
+        <div class="col-lg-5 d-none d-lg-block">
+            <div class="p-4">
+                <h4 class="text-purple mb-4">加入签名墙的好处</h4>
+                
+                <div class="benefit-item fade-in" style="animation-delay: 100ms;">
+                    <div class="benefit-icon">
+                        <i class="fas fa-signature"></i>
+                    </div>
+                    <div>
+                        <h5 class="mb-1">展示个人签名</h5>
+                        <p class="text-muted mb-0 small">创建并分享您独特的签名作品</p>
+                    </div>
+                </div>
+                
+                <div class="benefit-item fade-in" style="animation-delay: 200ms;">
+                    <div class="benefit-icon">
+                        <i class="fas fa-pen-fancy"></i>
+                    </div>
+                    <div>
+                        <h5 class="mb-1">发布博客文章</h5>
+                        <p class="text-muted mb-0 small">分享您的想法和创作历程</p>
+                    </div>
+                </div>
+                
+                <div class="benefit-item fade-in" style="animation-delay: 300ms;">
+                    <div class="benefit-icon">
+                        <i class="fas fa-comments"></i>
+                    </div>
+                    <div>
+                        <h5 class="mb-1">互动交流</h5>
+                        <p class="text-muted mb-0 small">与其他创作者交流互动</p>
+                    </div>
+                </div>
+                
+                <div class="benefit-item fade-in" style="animation-delay: 400ms;">
+                    <div class="benefit-icon">
+                        <i class="fas fa-trophy"></i>
+                    </div>
+                    <div>
+                        <h5 class="mb-1">获得认可</h5>
+                        <p class="text-muted mb-0 small">让您的作品获得应有的赞赏</p>
+                    </div>
+                </div>
+                
+                <div class="text-center mt-5 fade-in" style="animation-delay: 500ms;">
+                    <img src="/static/images/signup-illustration.svg" alt="注册插图" class="img-fluid" style="max-width: 200px;">
                 </div>
             </div>
         </div>
     </div>
+    
+    <div class="text-center mt-4">
+        <p class="text-muted small">
+            <i class="fas fa-shield-alt me-1"></i> 安全注册 | 珍视您的隐私
+        </p>
+    </div>
 </div>
+
+{% block extra_js %}
+<script src="/static/js/subpages.js"></script>
+{% endblock %}
 {% endblock %}

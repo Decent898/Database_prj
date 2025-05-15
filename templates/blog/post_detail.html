@@ -6,129 +6,267 @@
 {% block extra_css %}
 <!-- KaTeX CSS -->
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" integrity="sha384-n8MVd4RsNIU0tAv4ct0nTaAbDJwPJzDEaqSD1odI+WdtXRGWt2kTvGFasHpSy3SV" crossorigin="anonymous">
+<link rel="stylesheet" href="/static/css/subpages.css">
 <style>
     .markdown-content img {
         max-width: 100%;
         height: auto;
+        border-radius: 8px;
+        margin: 1.5rem 0;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
     }
+    
     .markdown-content table {
         width: 100%;
         border-collapse: collapse;
-        margin: 1em 0;
+        margin: 1.5rem 0;
+        border-radius: 8px;
+        overflow: hidden;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
     }
-    .markdown-content th, .markdown-content td {
-        border: 1px solid #ddd;
-        padding: 8px;
+    
+    .markdown-content th {
+        background-color: rgba(108, 92, 231, 0.1);
+        color: #6c5ce7;
+        font-weight: 600;
+        padding: 12px;
+        text-align: left;
     }
+    
+    .markdown-content td {
+        border-top: 1px solid #f1f1f1;
+        padding: 12px;
+    }
+    
+    .markdown-content tr:hover {
+        background-color: rgba(108, 92, 231, 0.03);
+    }
+    
     .markdown-content pre {
-        background: #f4f4f4;
-        padding: 10px;
-        border-radius: 5px;
+        background: #f8f9fa;
+        padding: 15px;
+        border-radius: 10px;
         overflow-x: auto;
+        border-left: 4px solid #6c5ce7;
+        margin: 1.5rem 0;
     }
+    
+    .markdown-content blockquote {
+        border-left: 4px solid #6c5ce7;
+        padding: 0.5rem 1rem;
+        background-color: rgba(108, 92, 231, 0.05);
+        margin: 1.5rem 0;
+        border-radius: 0 8px 8px 0;
+    }
+    
+    .markdown-content h1, .markdown-content h2, .markdown-content h3, 
+    .markdown-content h4, .markdown-content h5, .markdown-content h6 {
+        margin-top: 1.5rem;
+        margin-bottom: 1rem;
+        font-weight: 600;
+        color: #333;
+    }
+    
+    .markdown-content h2 {
+        border-bottom: 2px solid rgba(108, 92, 231, 0.2);
+        padding-bottom: 0.5rem;
+    }
+    
     /* 数学公式样式 */
     .math {
         overflow-x: auto;
         max-width: 100%;
-        padding: 5px 0;
+        padding: 8px 0;
+        margin: 1rem 0;
     }
+    
     .MathJax {
         overflow-x: auto;
         overflow-y: hidden;
+    }
+    
+    /* 文章元信息样式 */
+    .post-meta {
+        display: flex;
+        flex-wrap: wrap;
+        margin-bottom: 1.5rem;
+    }
+    
+    .post-meta-item {
+        margin-right: 1rem;
+        margin-bottom: 0.5rem;
+        display: flex;
+        align-items: center;
+    }
+    
+    .post-meta-item i {
+        margin-right: 0.5rem;
+        color: #6c5ce7;
+    }
+    
+    /* 评论样式 */
+    .comment-item {
+        border-radius: 10px;
+        margin-bottom: 1rem;
+        transition: all 0.3s ease;
+    }
+    
+    .comment-item:hover {
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+        transform: translateY(-2px);
     }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="card mb-4">
-    <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
-        <h2 class="card-title mb-0">{{ post.title }}</h2>
-        {% if user == post.user %}
-            <div>
-                <a href="{% url 'update_post' post.id post.slug %}" class="btn btn-sm btn-outline-light">编辑</a>
-                <a href="{% url 'delete_post' post.id post.slug %}" class="btn btn-sm btn-outline-danger">删除</a>
-            </div>
-        {% endif %}
+<div class="container py-4 fade-in">
+    <!-- 返回按钮 -->
+    <div class="mb-3">
+        <a href="{% url 'post_list' %}" class="btn btn-outline-primary btn-back">
+            <i class="fas fa-arrow-left"></i> 返回文章列表
+        </a>
     </div>
     
-    <div class="card-body">
-        <div class="d-flex justify-content-between mb-3">
-            <div>
-                作者: <a href="{% url 'user_profile' post.user.username %}">{{ post.user.username }}</a>
-                | 发布时间: {{ post.published_date|date:"Y年m月d日 H:i" }}
-            </div>
-            
-            {% if post.signature %}
+    <!-- 文章主体 -->
+    <div class="card mb-4 shadow-hover border-0 animated-card">
+        <!-- 文章标题区 -->
+        <div class="card-header gradient-header d-flex justify-content-between align-items-center">
+            <h1 class="card-title mb-0 text-contrast-white">{{ post.title }}</h1>
+            {% if user == post.user %}
                 <div>
-                    <a href="{% url 'signature_detail' post.signature.id %}" class="btn btn-sm btn-outline-primary">
-                        查看作者签名
+                    <a href="{% url 'update_post' post.id post.slug %}" class="btn btn-light btn-sm btn-hover-effect">
+                        <i class="fas fa-edit"></i> 编辑
+                    </a>
+                    <a href="{% url 'delete_post' post.id post.slug %}" class="btn btn-danger btn-sm btn-hover-effect">
+                        <i class="fas fa-trash"></i> 删除
                     </a>
                 </div>
             {% endif %}
         </div>
         
-        <hr>
-        
-        <!-- 文章标签 -->
-        {% if post.tags.all %}
-            <div class="mb-3">
-                {% for tag in post.tags.all %}
-                    <a href="{% url 'tag_posts' tag.slug %}" class="badge bg-secondary text-decoration-none">{{ tag.name }}</a>
-                {% endfor %}
+        <!-- 文章信息区 -->
+        <div class="card-body pb-0">
+            <div class="post-meta">
+                <div class="post-meta-item">
+                    <i class="fas fa-user-circle"></i>
+                    <a href="{% url 'user_profile' post.user.username %}" class="text-decoration-none">{{ post.user.username }}</a>
+                </div>
+                <div class="post-meta-item">
+                    <i class="far fa-calendar-alt"></i>
+                    {{ post.published_date|date:"Y年m月d日 H:i" }}
+                </div>
+                {% if post.updated_date and post.updated_date != post.published_date %}
+                <div class="post-meta-item">
+                    <i class="fas fa-edit"></i>
+                    更新于: {{ post.updated_date|date:"Y年m月d日 H:i" }}
+                </div>
+                {% endif %}
+                {% if post.signature %}
+                <div class="post-meta-item">
+                    <a href="{% url 'signature_detail' post.signature.id %}" class="btn btn-sm btn-outline-purple btn-hover-effect">
+                        <i class="fas fa-signature"></i> 查看作者签名
+                    </a>
+                </div>
+                {% endif %}
             </div>
-        {% endif %}
+            
+            <!-- 文章标签 -->
+            {% if post.tags.all %}
+                <div class="mb-4">
+                    {% for tag in post.tags.all %}
+                        <a href="{% url 'tag_posts' tag.slug %}" class="badge bg-purple-light text-purple me-2 mb-2 py-2 px-3 rounded-pill text-decoration-none hover-tag">
+                            <i class="fas fa-tag"></i> {{ tag.name }}
+                        </a>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        </div>
         
-        <!-- 文章内容 -->
-        <div class="markdown-content">
-            {{ post.get_content_as_html }}
+        <!-- 文章内容区 -->
+        <div class="card-body pt-0">
+            <hr class="my-4">
+            
+            <div class="markdown-content fade-in">
+                {{ post.get_content_as_html }}
+            </div>
+        </div>
+        
+        <!-- 文章底部区 -->
+        <div class="card-footer bg-white border-top-0">
+            <div class="d-flex justify-content-between align-items-center">
+                <div class="post-actions">
+                    <button class="btn btn-sm btn-outline-purple btn-hover-effect share-btn" data-bs-toggle="tooltip" title="分享文章">
+                        <i class="fas fa-share-alt"></i> 分享
+                    </button>
+                </div>
+                <div>
+                    <span class="text-muted">
+                        <i class="far fa-comment"></i> {{ post.comments.count }} 条评论
+                    </span>
+                </div>
+            </div>
         </div>
     </div>
-</div>
 
-<!-- 评论区 -->
-<div class="card mb-4">
-    <div class="card-header bg-light">
-        <h4>评论</h4>
-    </div>
-    <div class="card-body">
-        {% if user.is_authenticated %}
-            <form method="POST">
-                {% csrf_token %}
-                {{ form|crispy }}
-                <button type="submit" class="btn btn-primary mt-2">提交评论</button>
-            </form>
-        {% else %}
-            <div class="alert alert-info">
-                请<a href="{% url 'login' %}">登录</a>后发表评论
-            </div>
-        {% endif %}
-        
-        <hr>
-        
-        <!-- 评论列表 -->
-        {% if post.comments.all %}
-            <div class="mt-4">
-                <h5>全部评论 ({{ post.comments.count }})</h5>
-                {% for comment in post.comments.all %}
-                    <div class="card mb-2 {% if not comment.approved %}bg-light{% endif %}">
-                        <div class="card-body">
-                            <div class="d-flex justify-content-between">
-                                <h6 class="card-subtitle mb-2 text-muted">
-                                    <a href="{% url 'user_profile' comment.author.username %}">{{ comment.author.username }}</a>
-                                    <small>{{ comment.created_date|date:"Y-m-d H:i" }}</small>
-                                </h6>
-                                {% if not comment.approved %}
-                                    <span class="badge bg-warning text-dark">待审核</span>
-                                {% endif %}
+    <!-- 评论区 -->
+    <div class="card mb-4 shadow-hover border-0 fade-in">
+        <div class="card-header gradient-header-light">
+            <h3 class="mb-0 text-contrast-dark"><i class="far fa-comments"></i> 评论区</h3>
+        </div>
+        <div class="card-body">
+            {% if user.is_authenticated %}
+                <form method="POST" class="comment-form mb-4">
+                    {% csrf_token %}
+                    {{ form|crispy }}
+                    <button type="submit" class="btn btn-purple btn-hover-effect mt-2">
+                        <i class="far fa-paper-plane"></i> 提交评论
+                    </button>
+                </form>
+            {% else %}
+                <div class="alert alert-purple-light mb-4 border-0 shadow-sm">
+                    <i class="fas fa-info-circle"></i> 请<a href="{% url 'login' %}" class="text-purple fw-bold">登录</a>后发表评论
+                </div>
+            {% endif %}
+            
+            <!-- 评论列表 -->
+            {% if post.comments.all %}
+                <h4 class="mb-3 text-purple">全部评论 ({{ post.comments.count }})</h4>
+                <div class="comment-list">
+                    {% for comment in post.comments.all %}
+                        <div class="comment-item card mb-3 {% if not comment.approved %}bg-light-purple{% endif %} border-0">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between">
+                                    <div class="d-flex align-items-center">
+                                        <div class="avatar-circle bg-purple-light me-2 d-flex align-items-center justify-content-center">
+                                            {{ comment.author.username|first|upper }}
+                                        </div>
+                                        <div>
+                                            <a href="{% url 'user_profile' comment.author.username %}" class="fw-bold text-decoration-none text-purple">
+                                                {{ comment.author.username }}
+                                            </a>
+                                            <small class="text-muted d-block">
+                                                <i class="far fa-clock"></i> {{ comment.created_date|date:"Y-m-d H:i" }}
+                                            </small>
+                                        </div>
+                                    </div>
+                                    {% if not comment.approved %}
+                                        <span class="badge bg-warning">待审核</span>
+                                    {% endif %}
+                                </div>
+                                <div class="comment-content mt-3">
+                                    {{ comment.text }}
+                                </div>
                             </div>
-                            <p class="card-text">{{ comment.text }}</p>
                         </div>
-                    </div>
-                {% endfor %}
-            </div>
-        {% else %}
-            <p class="text-center text-muted">暂无评论</p>
-        {% endif %}
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="text-center py-4 text-muted">
+                    <i class="far fa-comment-dots fa-3x mb-3"></i>
+                    <p>暂无评论，来发表第一条评论吧！</p>
+                </div>
+            {% endif %}
+        </div>
     </div>
 </div>
 
@@ -136,9 +274,18 @@
 <!-- KaTeX JS -->
 <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" integrity="sha384-XjKyOOlGwcjNTAIQHIpgOno0Hl1YQqzUOEleOLALmuqehneUG+vnGctmUb0ZY0l8" crossorigin="anonymous"></script>
 <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" integrity="sha384-+VBxd3r6XgURycqtZ117nYw44OOcIax56Z4dCRWbxyPt0Koah1uHoK0o4+/RRE05" crossorigin="anonymous"></script>
+<script src="/static/js/subpages.js"></script>
 
 <script>
     document.addEventListener("DOMContentLoaded", function() {
+        // 初始化工具提示
+        if (typeof bootstrap !== 'undefined' && bootstrap.Tooltip) {
+            const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+            tooltipTriggerList.map(function (tooltipTriggerEl) {
+                return new bootstrap.Tooltip(tooltipTriggerEl);
+            });
+        }
+        
         // 自动渲染所有数学表达式
         renderMathInElement(document.querySelector('.markdown-content'), {
             // 自定义配置
@@ -150,6 +297,83 @@
             ],
             throwOnError: false,
             trust: true
+        });
+        
+        // 添加渐入动画效果
+        const fadeElements = document.querySelectorAll('.fade-in');
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('visible');
+                }
+            });
+        }, { threshold: 0.1 });
+        
+        fadeElements.forEach(el => {
+            observer.observe(el);
+        });
+        
+        // 分享按钮功能
+        document.querySelector('.share-btn')?.addEventListener('click', function() {
+            if (navigator.share) {
+                navigator.share({
+                    title: document.title,
+                    url: window.location.href
+                }).catch(console.error);
+            } else {
+                // 复制到剪贴板
+                const tempInput = document.createElement('input');
+                tempInput.value = window.location.href;
+                document.body.appendChild(tempInput);
+                tempInput.select();
+                document.execCommand('copy');
+                document.body.removeChild(tempInput);
+                
+                // 显示提示
+                alert('链接已复制到剪贴板！');
+            }
+        });
+        
+        // 图片点击放大功能
+        const contentImages = document.querySelectorAll('.markdown-content img');
+        contentImages.forEach(img => {
+            img.addEventListener('click', function() {
+                // 创建模态框背景
+                const modal = document.createElement('div');
+                modal.classList.add('image-modal');
+                modal.style.position = 'fixed';
+                modal.style.top = '0';
+                modal.style.left = '0';
+                modal.style.width = '100%';
+                modal.style.height = '100%';
+                modal.style.backgroundColor = 'rgba(0,0,0,0.9)';
+                modal.style.display = 'flex';
+                modal.style.alignItems = 'center';
+                modal.style.justifyContent = 'center';
+                modal.style.zIndex = '9999';
+                
+                // 创建大图
+                const largeImg = document.createElement('img');
+                largeImg.src = this.src;
+                largeImg.style.maxHeight = '90%';
+                largeImg.style.maxWidth = '90%';
+                largeImg.style.objectFit = 'contain';
+                largeImg.style.boxShadow = '0 5px 15px rgba(0,0,0,0.5)';
+                largeImg.style.transition = 'all 0.3s ease';
+                
+                modal.appendChild(largeImg);
+                document.body.appendChild(modal);
+                
+                modal.addEventListener('click', function() {
+                    modal.style.opacity = '0';
+                    setTimeout(() => {
+                        document.body.removeChild(modal);
+                    }, 300);
+                });
+            });
+            
+            // 添加鼠标指针样式，表明图片可点击
+            img.style.cursor = 'zoom-in';
         });
     });
 </script>

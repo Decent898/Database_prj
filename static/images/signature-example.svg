@@ -1,0 +1,13 @@
+<svg width="300" height="100" xmlns="http://www.w3.org/2000/svg">
+  <style>
+    .signature-path {
+      stroke: #6c5ce7;
+      stroke-width: 3;
+      fill: none;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+  </style>
+  
+  <path class="signature-path" d="M20,60 C40,40 60,90 80,60 C100,30 120,80 140,50 C160,20 180,70 200,40 C220,20 240,60 260,30 C270,20 280,40 290,30" />
+</svg>

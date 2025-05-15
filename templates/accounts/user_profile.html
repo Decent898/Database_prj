@@ -1,86 +1,430 @@
 {% extends 'base.html' %}
+{% load blog_extras %}
 
 {% block title %}{{ profile_user.username }}的主页 - 签名墙{% endblock %}
 
+{% block extra_css %}
+<link rel="stylesheet" href="/static/css/subpages.css">
+<style>
+    .profile-header {
+        position: relative;
+        background: linear-gradient(120deg, #6c5ce7, #a29bfe);
+        height: 200px;
+        border-radius: 15px;
+        margin-bottom: 80px;
+        overflow: hidden;
+    }
+    
+    .profile-header::before {
+        content: '';
+        position: absolute;
+        top: -10px;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: url('/static/images/pattern-dots.svg');
+        opacity: 0.1;
+    }
+    
+    .profile-avatar {
+        position: relative;
+        margin-top: -75px;
+        border: 5px solid white;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        transition: all 0.3s ease;
+    }
+    
+    .profile-avatar:hover {
+        transform: scale(1.05);
+    }
+    
+    .signature-card {
+        overflow: hidden;
+        border-radius: 15px;
+        transition: all 0.3s ease;
+        border: none;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+    }
+    
+    .signature-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+    }
+    
+    .signature-img {
+        height: 180px;
+        object-fit: cover;
+        transition: all 0.5s ease;
+    }
+    
+    .signature-card:hover .signature-img {
+        transform: scale(1.1);
+    }
+    
+    .badge-activity {
+        display: inline-block;
+        padding: 0.35em 0.65em;
+        font-size: 0.75em;
+        font-weight: 700;
+        line-height: 1;
+        color: #fff;
+        text-align: center;
+        white-space: nowrap;
+        vertical-align: baseline;
+        border-radius: 0.25rem;
+        margin-right: 0.5rem;
+        margin-bottom: 0.5rem;
+    }
+    
+    .activity-item {
+        border-left: 3px solid #6c5ce7;
+        padding-left: 1rem;
+        margin-bottom: 1rem;
+        position: relative;
+    }
+    
+    .activity-item::before {
+        content: '';
+        position: absolute;
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background: #6c5ce7;
+        left: -7px;
+        top: 5px;
+    }
+    
+    .social-links a {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        background: #f8f9fa;
+        color: #6c5ce7;
+        margin-right: 10px;
+        transition: all 0.3s ease;
+    }
+    
+    .social-links a:hover {
+        background: #6c5ce7;
+        color: white;
+        transform: translateY(-3px);
+    }
+    
+    .tab-content {
+        padding: 20px 0;
+    }
+</style>
+{% endblock %}
+
 {% block content %}
-<div class="row">
-    <div class="col-md-4 mb-4">
-        <div class="card">
-            <div class="card-header bg-primary text-white">
-                <h5 class="card-title mb-0">用户信息</h5>
-            </div>
-            <div class="card-body text-center">
-                <img src="{{ profile_user.profile.profile_pic.url }}" alt="{{ profile_user.username }}的头像" 
-                     class="rounded-circle img-fluid mb-3" style="max-width: 150px;">
-                <h4>{{ profile_user.username }}</h4>
-                {% if profile_user.profile.bio %}
-                    <p class="text-muted">{{ profile_user.profile.bio }}</p>
-                {% endif %}
-                {% if profile_user.profile.website %}
-                    <a href="{{ profile_user.profile.website }}" target="_blank" class="btn btn-sm btn-outline-primary">个人网站</a>
-                {% endif %}
+<div class="container py-4 fade-in">
+    <!-- 顶部个人资料横幅 -->
+    <div class="profile-header">
+        <div class="container">
+            <div class="text-white d-flex justify-content-between p-4">
+                <div>
+                    <h1 class="fw-bold">{{ profile_user.username }}</h1>
+                    <p class="mb-0">
+                        <i class="fas fa-calendar-alt"></i> 加入时间: {{ profile_user.date_joined|date:"Y年m月d日" }}
+                    </p>
+                </div>
+                <div>
+                    {% if user == profile_user %}
+                    <a href="{% url 'profile' %}" class="btn btn-light btn-hover-effect">
+                        <i class="fas fa-edit"></i> 编辑资料
+                    </a>
+                    {% endif %}
+                </div>
             </div>
         </div>
     </div>
     
-    <div class="col-md-8">
-        <div class="card mb-4">
-            <div class="card-header bg-primary text-white">
-                <h5 class="card-title mb-0">{{ profile_user.username }}的签名作品</h5>
+    <div class="container">
+        <div class="row">
+            <!-- 左侧个人信息 -->
+            <div class="col-lg-4">
+                <div class="card border-0 shadow-hover mb-4">
+                    <div class="card-body text-center">
+                        <img src="{{ profile_user.profile.profile_pic.url }}" alt="{{ profile_user.username }}的头像" 
+                            class="rounded-circle profile-avatar img-fluid mb-3" style="max-width: 150px;">
+                        
+                        <h3 class="fw-bold mb-2">{{ profile_user.username }}</h3>
+                        
+                        {% if profile_user.profile.bio %}
+                        <div class="mb-3">
+                            <p class="text-muted mb-0">{{ profile_user.profile.bio }}</p>
+                        </div>
+                        {% endif %}
+                        
+                        <div class="social-links mb-4">
+                            {% if profile_user.profile.website %}
+                            <a href="{{ profile_user.profile.website }}" target="_blank" title="个人网站">
+                                <i class="fas fa-globe"></i>
+                            </a>
+                            {% endif %}
+                            {% if profile_user.profile.github %}
+                            <a href="{{ profile_user.profile.github }}" target="_blank" title="GitHub">
+                                <i class="fab fa-github"></i>
+                            </a>
+                            {% endif %}
+                            {% if profile_user.profile.twitter %}
+                            <a href="{{ profile_user.profile.twitter }}" target="_blank" title="Twitter">
+                                <i class="fab fa-twitter"></i>
+                            </a>
+                            {% endif %}
+                        </div>
+                        
+                        <!-- 数据统计 -->
+                        <div class="row text-center">
+                            <div class="col-4">
+                                <div class="border-end">
+                                    <h4 class="fw-bold text-purple counter">{{ signatures.count }}</h4>
+                                    <p class="text-muted mb-0">签名</p>
+                                </div>
+                            </div>
+                            <div class="col-4">
+                                <div class="border-end">
+                                    <h4 class="fw-bold text-purple counter">{{ posts.count }}</h4>
+                                    <p class="text-muted mb-0">文章</p>
+                                </div>
+                            </div>
+                            <div class="col-4">
+                                <div>
+                                    <h4 class="fw-bold text-purple counter">
+                                        {% with comment_count=profile_user.comments.count %}
+                                            {{ comment_count }}
+                                        {% endwith %}
+                                    </h4>
+                                    <p class="text-muted mb-0">评论</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 标签和兴趣 -->
+                <div class="card border-0 shadow-hover mb-4">
+                    <div class="card-header gradient-header-light">
+                        <h5 class="card-title mb-0 text-contrast-dark"><i class="fas fa-tags"></i> 标签和兴趣</h5>
+                    </div>
+                    <div class="card-body">
+                        <span class="badge-activity bg-purple-light text-purple">签名创作</span>
+                        <span class="badge-activity bg-purple-light text-purple">博客写作</span>
+                        {% if profile_user.profile.interests %}
+                            {% for interest in profile_user.profile.interests|split:',' %}
+                                <span class="badge-activity bg-purple-light text-purple">{{ interest }}</span>
+                            {% endfor %}
+                        {% endif %}
+                    </div>
+                </div>
             </div>
-            <div class="card-body">
-                {% if signatures %}
-                    <div class="row">
-                        {% for signature in signatures|slice:":3" %}
-                            <div class="col-md-4 mb-3">
-                                <div class="card h-100">
+            
+            <!-- 右侧内容区 -->
+            <div class="col-lg-8">
+                <!-- 标签页导航 -->
+                <ul class="nav nav-pills mb-3" id="profileTabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="signatures-tab" data-bs-toggle="tab" data-bs-target="#signatures" type="button" role="tab" aria-controls="signatures" aria-selected="true">
+                            <i class="fas fa-signature"></i> 签名作品
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="posts-tab" data-bs-toggle="tab" data-bs-target="#posts" type="button" role="tab" aria-controls="posts" aria-selected="false">
+                            <i class="fas fa-file-alt"></i> 博客文章
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="activity-tab" data-bs-toggle="tab" data-bs-target="#activity" type="button" role="tab" aria-controls="activity" aria-selected="false">
+                            <i class="fas fa-chart-line"></i> 近期活动
+                        </button>
+                    </li>
+                </ul>
+                
+                <!-- 标签页内容 -->
+                <div class="tab-content" id="profileTabsContent">
+                    <!-- 签名作品标签页 -->
+                    <div class="tab-pane fade show active" id="signatures" role="tabpanel" aria-labelledby="signatures-tab">
+                        {% if signatures %}
+                        <div class="row">
+                            {% for signature in signatures|slice:":6" %}
+                            <div class="col-md-4 mb-4 fade-in" style="animation-delay: {{ forloop.counter|multiply:100 }}ms">
+                                <div class="card signature-card h-100">
                                     <a href="{% url 'signature_detail' signature.id %}">
-                                        <img src="{{ signature.image.url }}" alt="{{ signature.title }}" class="card-img-top">
+                                        <img src="{{ signature.image.url }}" alt="{{ signature.title }}" class="card-img-top signature-img">
                                     </a>
                                     <div class="card-body">
-                                        <h6 class="card-title">{{ signature.title }}</h6>
+                                        <h6 class="card-title mb-1">{{ signature.title }}</h6>
+                                        <small class="text-muted">{{ signature.created_at|date:"Y-m-d" }}</small>
+                                        <div class="mt-2">
+                                            <span class="badge bg-purple-light text-purple">
+                                                <i class="far fa-heart"></i> {{ signature.likes.count }}
+                                            </span>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
-                        {% endfor %}
-                    </div>
-                    {% if signatures.count > 3 %}
-                        <div class="text-center mt-3">
-                            <a href="{% url 'user_signatures' profile_user.username %}" class="btn btn-outline-primary">查看全部签名</a>
+                            {% endfor %}
                         </div>
-                    {% endif %}
-                {% else %}
-                    <p class="text-center text-muted">暂无公开签名作品</p>
-                {% endif %}
-            </div>
-        </div>
-        
-        <div class="card">
-            <div class="card-header bg-success text-white">
-                <h5 class="card-title mb-0">{{ profile_user.username }}的文章</h5>
-            </div>
-            <div class="card-body">
-                {% if posts %}
-                    <div class="list-group">
-                        {% for post in posts|slice:":5" %}
-                            <a href="{% url 'post_detail' post.id post.slug %}" class="list-group-item list-group-item-action">
-                                <div class="d-flex w-100 justify-content-between">
-                                    <h6 class="mb-1">{{ post.title }}</h6>
-                                    <small class="text-muted">{{ post.published_date|date:"Y-m-d" }}</small>
+                        {% if signatures.count > 6 %}
+                        <div class="text-center mt-3">
+                            <a href="{% url 'user_signatures' profile_user.username %}" class="btn btn-purple btn-hover-effect">
+                                <i class="fas fa-th"></i> 查看全部签名
+                            </a>
+                        </div>
+                        {% endif %}
+                        {% else %}
+                        <div class="text-center py-5">
+                            <div class="mb-3">
+                                <i class="fas fa-signature fa-3x text-muted"></i>
+                            </div>
+                            <h5 class="text-muted">暂无公开签名作品</h5>
+                        </div>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- 博客文章标签页 -->
+                    <div class="tab-pane fade" id="posts" role="tabpanel" aria-labelledby="posts-tab">
+                        {% if posts %}
+                        <div class="list-group shadow-sm">
+                            {% for post in posts|slice:":8" %}
+                            <a href="{% url 'post_detail' post.id post.slug %}" class="list-group-item list-group-item-action border-0 mb-2 shadow-hover fade-in" style="animation-delay: {{ forloop.counter|multiply:100 }}ms">
+                                <div class="d-flex w-100 justify-content-between align-items-center">
+                                    <div style="width: 100%; overflow: hidden;">
+                                        <h5 class="mb-1 text-truncate" style="max-width: 100%;">{{ post.title }}</h5>
+                                        <p class="mb-1 text-muted text-truncate">{{ post.content|striptags|truncatewords:10 }}</p>
+                                        <div>
+                                            <small class="text-purple">
+                                                <i class="far fa-calendar-alt"></i> {{ post.published_date|date:"Y年m月d日" }}
+                                            </small>
+                                            <small class="ms-2 text-muted">
+                                                <i class="far fa-comment"></i> {{ post.comments.count }} 条评论
+                                            </small>
+                                        </div>
+                                    </div>
                                 </div>
                             </a>
-                        {% endfor %}
-                    </div>
-                    {% if posts.count > 5 %}
-                        <div class="text-center mt-3">
-                            <a href="{% url 'user_posts' profile_user.username %}" class="btn btn-outline-success">查看全部文章</a>
+                            {% endfor %}
                         </div>
-                    {% endif %}
-                {% else %}
-                    <p class="text-center text-muted">暂无公开文章</p>
-                {% endif %}
+                        {% if posts.count > 8 %}
+                        <div class="text-center mt-3">
+                            <a href="{% url 'user_posts' profile_user.username %}" class="btn btn-purple btn-hover-effect">
+                                <i class="fas fa-book"></i> 查看全部文章
+                            </a>
+                        </div>
+                        {% endif %}
+                        {% else %}
+                        <div class="text-center py-5">
+                            <div class="mb-3">
+                                <i class="fas fa-file-alt fa-3x text-muted"></i>
+                            </div>
+                            <h5 class="text-muted">暂无公开博客文章</h5>
+                        </div>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- 近期活动标签页 -->
+                    <div class="tab-pane fade" id="activity" role="tabpanel" aria-labelledby="activity-tab">
+                        <div class="activity-timeline">
+                            <!-- 这里可以是一个按时间线排列的用户活动记录 -->
+                            <div class="activity-item fade-in" style="animation-delay: 100ms">
+                                <div class="d-flex">
+                                    <div>
+                                        <h6 class="fw-bold">发布了新签名</h6>
+                                        <p class="mb-1">在签名墙添加了新的签名作品。</p>
+                                        <small class="text-muted">
+                                            <i class="far fa-clock"></i> {% if signatures %}{{ signatures.first.created_at|date:"Y年m月d日 H:i" }}{% else %}最近{% endif %}
+                                        </small>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="activity-item fade-in" style="animation-delay: 200ms">
+                                <div class="d-flex">
+                                    <div>
+                                        <h6 class="fw-bold">发表了新文章</h6>
+                                        <p class="mb-1">发布了一篇新的博客文章。</p>
+                                        <small class="text-muted">
+                                            <i class="far fa-clock"></i> {% if posts %}{{ posts.first.published_date|date:"Y年m月d日 H:i" }}{% else %}最近{% endif %}
+                                        </small>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="activity-item fade-in" style="animation-delay: 300ms">
+                                <div class="d-flex">
+                                    <div>
+                                        <h6 class="fw-bold">评论了文章</h6>
+                                        <p class="mb-1">在博客文章下发表了评论。</p>
+                                        <small class="text-muted">
+                                            <i class="far fa-clock"></i> 最近
+                                        </small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="/static/js/subpages.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // 初始化标签页
+        var profileTabs = document.getElementById('profileTabs');
+        var tabList = [].slice.call(profileTabs.querySelectorAll('button[data-bs-toggle="tab"]'));
+        
+        tabList.forEach(function (tabEl) {
+            tabEl.addEventListener('click', function (event) {
+                event.preventDefault();
+                if (typeof bootstrap !== 'undefined') {
+                    new bootstrap.Tab(tabEl).show();
+                }
+            });
+        });
+        
+        // 为计数器添加动画效果
+        const counters = document.querySelectorAll('.counter');
+        
+        const animateCounter = (counter) => {
+            const target = parseInt(counter.innerText, 10);
+            const duration = 1000;
+            const step = target / duration * 10;
+            let current = 0;
+            
+            const updateCounter = () => {
+                current += step;
+                if (current < target) {
+                    counter.innerText = Math.floor(current);
+                    setTimeout(updateCounter, 10);
+                } else {
+                    counter.innerText = target;
+                }
+            };
+            
+            updateCounter();
+        };
+        
+        // 使用 IntersectionObserver 在元素进入视口时触发动画
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    animateCounter(entry.target);
+                    observer.unobserve(entry.target);
+                }
+            });
+        }, { threshold: 0.5 });
+        
+        counters.forEach(counter => {
+            observer.observe(counter);
+        });
+    });
+</script>
 {% endblock %}

@@ -1,37 +1,321 @@
 {% extends 'base.html' %}
 {% load crispy_forms_tags %}
+{% load blog_extras %}
 
 {% block title %}上传签名 - 签名墙{% endblock %}
 
+{% block extra_css %}
+<link rel="stylesheet" href="/static/css/subpages.css">
+<style>
+    .form-card {
+        border-radius: 15px;
+        overflow: hidden;
+        border: none;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+    }
+    
+    .upload-area {
+        border: 2px dashed #e6e6e6;
+        border-radius: 10px;
+        padding: 40px;
+        text-align: center;
+        transition: all 0.3s ease;
+        margin-bottom: 20px;
+    }
+    
+    .upload-area:hover {
+        border-color: #6c5ce7;
+        background-color: rgba(108, 92, 231, 0.03);
+    }
+    
+    .upload-icon {
+        font-size: 3rem;
+        color: #6c5ce7;
+        margin-bottom: 20px;
+    }
+    
+    .tip-card {
+        border-radius: 10px;
+        border-left: 4px solid #6c5ce7;
+        background-color: rgba(108, 92, 231, 0.05);
+    }
+    
+    .tip-item {
+        display: flex;
+        align-items: flex-start;
+        margin-bottom: 15px;
+    }
+    
+    .tip-icon {
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        background-color: rgba(108, 92, 231, 0.1);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 10px;
+        color: #6c5ce7;
+        flex-shrink: 0;
+    }
+    
+    .preview-container {
+        background-color: #f9f9f9;
+        border-radius: 10px;
+        padding: 20px;
+        text-align: center;
+        margin-top: 20px;
+    }
+    
+    .preview-image {
+        max-width: 100%;
+        max-height: 300px;
+        border-radius: 5px;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+    }
+    
+    .file-input {
+        display: none;
+    }
+    
+    .custom-file-button {
+        display: inline-block;
+        padding: 10px 20px;
+        background-color: #6c5ce7;
+        color: white;
+        border-radius: 5px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    
+    .custom-file-button:hover {
+        background-color: #5649c0;
+        transform: translateY(-2px);
+    }
+</style>
+{% endblock %}
+
 {% block content %}
-<div class="row justify-content-center">
-    <div class="col-md-8">
-        <div class="card">
-            <div class="card-header bg-primary text-white">
-                <h3 class="card-title mb-0">上传新签名</h3>
+<div class="container py-4 fade-in">
+    <!-- 返回按钮 -->
+    <div class="mb-3">
+        <a href="{% url 'my_signatures' %}" class="btn btn-outline-purple btn-back">
+            <i class="fas fa-arrow-left"></i> 返回我的签名
+        </a>
+    </div>
+    
+    <div class="row">
+        <div class="col-lg-8">
+            <!-- 上传表单卡片 -->
+            <div class="card form-card mb-4">
+                <div class="card-header gradient-header">
+                    <h2 class="card-title mb-0 text-contrast-white">
+                        <i class="fas fa-signature me-2"></i>
+                        {% if form.instance.pk %}编辑签名{% else %}上传新签名{% endif %}
+                    </h2>
+                </div>
+                <div class="card-body p-4">
+                    <form method="POST" enctype="multipart/form-data" id="signatureForm">
+                        {% csrf_token %}
+                        
+                        <!-- 上传区域 -->
+                        <div class="upload-area" id="dropArea">
+                            <div class="upload-icon">
+                                <i class="fas fa-upload"></i>
+                            </div>
+                            <h4>点击或拖放文件上传</h4>
+                            <p class="text-muted">支持 PNG、JPG、WEBP 格式，最大 5MB</p>
+                            <input type="file" name="{{ form.image.name }}" id="id_image" class="file-input" accept="image/*">
+                            <label for="id_image" class="custom-file-button">选择文件</label>
+                        </div>
+                        
+                        <!-- 图片预览区域 -->
+                        <div class="preview-container d-none" id="previewContainer">
+                            <img src="#" alt="签名预览" class="preview-image" id="previewImage">
+                            <div class="mt-2">
+                                <button type="button" class="btn btn-sm btn-outline-danger" id="removeImage">
+                                    <i class="fas fa-times"></i> 移除
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <!-- 表单字段 -->
+                        <div class="row">
+                            <div class="col-md-6">
+                                {{ form.title|as_crispy_field }}
+                            </div>
+                            <div class="col-md-6">
+                                {{ form.is_public|as_crispy_field }}
+                            </div>
+                        </div>
+                        
+                        {{ form.description|as_crispy_field }}
+                        
+                        <!-- 隐藏字段：位置和样式将由系统自动设置或在签名墙页面调整 -->
+                        <div class="alert alert-info mt-3 mb-3">
+                            <i class="fas fa-info-circle"></i> 签名的位置、角度和大小可以在上传后在签名墙页面调整
+                        </div>
+                        
+                        <div class="mt-4 d-flex justify-content-between">
+                            <button type="submit" class="btn btn-purple btn-hover-effect">
+                                <i class="fas fa-save"></i> 保存签名
+                            </button>
+                            <a href="{% url 'my_signatures' %}" class="btn btn-outline-secondary">
+                                <i class="fas fa-times"></i> 取消
+                            </a>
+                        </div>
+                    </form>
+                </div>
             </div>
-            <div class="card-body">
-                <form method="POST" enctype="multipart/form-data">
-                    {% csrf_token %}
-                    {{ form|crispy }}
-                    <div class="mt-3">
-                        <button type="submit" class="btn btn-primary">上传</button>
-                        <a href="{% url 'my_signatures' %}" class="btn btn-outline-secondary">取消</a>
+        </div>
+        
+        <div class="col-lg-4">
+            <!-- 提示栏 -->
+            <div class="card form-card mb-4">
+                <div class="card-header gradient-header-light">
+                    <h4 class="card-title mb-0 text-contrast-dark">
+                        <i class="fas fa-lightbulb me-2"></i> 上传提示
+                    </h4>
+                </div>
+                <div class="card-body p-4">
+                    <div class="tip-card p-3">
+                        <div class="tip-item">
+                            <div class="tip-icon">
+                                <i class="fas fa-image"></i>
+                            </div>
+                            <div>
+                                <strong>推荐透明背景PNG格式</strong>
+                                <p class="text-muted mb-0 small">透明背景让您的签名更加精美</p>
+                            </div>
+                        </div>
+                        
+                        <div class="tip-item">
+                            <div class="tip-icon">
+                                <i class="fas fa-expand"></i>
+                            </div>
+                            <div>
+                                <strong>尺寸建议</strong>
+                                <p class="text-muted mb-0 small">建议图片尺寸不小于500x200像素</p>
+                            </div>
+                        </div>
+                        
+                        <div class="tip-item">
+                            <div class="tip-icon">
+                                <i class="fas fa-globe"></i>
+                            </div>
+                            <div>
+                                <strong>设置为公开</strong>
+                                <p class="text-muted mb-0 small">公开的签名将显示在签名墙上</p>
+                            </div>
+                        </div>
+                        
+                        <div class="tip-item">
+                            <div class="tip-icon">
+                                <i class="fas fa-file-alt"></i>
+                            </div>
+                            <div>
+                                <strong>关联博客文章</strong>
+                                <p class="text-muted mb-0 small">在创建博客文章时可选择关联签名</p>
+                            </div>
+                        </div>
                     </div>
-                </form>
-            </div>
-            <div class="card-footer">
-                <div class="alert alert-info mb-0">
-                    <h5 class="alert-heading">上传提示:</h5>
-                    <ul class="mb-0">
-                        <li>签名图片推荐使用透明背景的PNG格式</li>
-                        <li>为了最佳显示效果，建议图片尺寸不小于500x200像素</li>
-                        <li>设置为公开的签名将显示在签名墙上</li>
-                        <li>您可以将签名关联到您的博客文章</li>
-                    </ul>
+                    
+                    <!-- 位置示例图 -->
+                    <div class="text-center mt-4 fade-in" style="animation-delay: 300ms;">
+                        <h5>位置和旋转示例</h5>
+                        <div class="position-relative bg-light p-3 rounded">
+                            <div class="position-absolute" style="top: 50%; left: 50%; transform: translate(-50%, -50%) rotate(15deg);">
+                                <img src="/static/images/signature-example.svg" alt="示例签名" class="img-fluid" style="max-height: 100px;">
+                            </div>
+                        </div>
+                        <p class="text-muted mt-2 small">通过调整位置和角度，为您的签名找到最佳位置</p>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 </div>
+
+{% block extra_js %}
+<script src="/static/js/subpages.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const dropArea = document.getElementById('dropArea');
+        const fileInput = document.getElementById('id_image');
+        const previewContainer = document.getElementById('previewContainer');
+        const previewImage = document.getElementById('previewImage');
+        const removeImageBtn = document.getElementById('removeImage');
+        
+        // 显示现有图片预览（如果是编辑模式）
+        {% if form.instance.image %}
+        const existingImageUrl = "{{ form.instance.image.url }}";
+        previewImage.src = existingImageUrl;
+        previewContainer.classList.remove('d-none');
+        {% endif %}
+        
+        // 处理拖放事件
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            dropArea.addEventListener(eventName, preventDefaults, false);
+        });
+        
+        function preventDefaults(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+        
+        ['dragenter', 'dragover'].forEach(eventName => {
+            dropArea.addEventListener(eventName, highlight, false);
+        });
+        
+        ['dragleave', 'drop'].forEach(eventName => {
+            dropArea.addEventListener(eventName, unhighlight, false);
+        });
+        
+        function highlight() {
+            dropArea.classList.add('border-purple');
+        }
+        
+        function unhighlight() {
+            dropArea.classList.remove('border-purple');
+        }
+        
+        // 处理文件拖放
+        dropArea.addEventListener('drop', handleDrop, false);
+        
+        function handleDrop(e) {
+            const dt = e.dataTransfer;
+            const files = dt.files;
+            if (files.length) {
+                fileInput.files = files;
+                updatePreview(files[0]);
+            }
+        }
+        
+        // 处理文件选择
+        fileInput.addEventListener('change', function() {
+            if (this.files.length) {
+                updatePreview(this.files[0]);
+            }
+        });
+        
+        // 更新预览
+        function updatePreview(file) {
+            if (file.type.startsWith('image/')) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    previewImage.src = e.target.result;
+                    previewContainer.classList.remove('d-none');
+                }
+                reader.readAsDataURL(file);
+            }
+        }
+        
+        // 移除图片
+        removeImageBtn.addEventListener('click', function() {
+            fileInput.value = '';
+            previewContainer.classList.add('d-none');
+        });
+    });
+</script>
+{% endblock %}
 {% endblock %}

@@ -41,8 +41,8 @@ class PostDetailView(DetailView):
     template_name = 'blog/post_detail.html'
     
     def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['form'] = CommentForm()
+        context = super().get_context_data(**kwargs) # 获取上下文数据
+        context['form'] = CommentForm() # 添加评论表单
         return context
     
     def post(self, request, *args, **kwargs):

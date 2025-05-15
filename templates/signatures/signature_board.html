@@ -1,19 +1,22 @@
 {% extends 'base.html' %}
+{% load blog_extras %}
 
 {% block title %}互动签名墙{% endblock %}
 
 {% block extra_css %}
+<link rel="stylesheet" href="/static/css/subpages.css">
 <style>
     #signature-board {
         position: relative;
         width: 100%;
         height: 600px;
-        background: linear-gradient(45deg, #D2B48C 25%, #BC8F8F 25%, #BC8F8F 50%, #D2B48C 50%, #D2B48C 75%, #BC8F8F 75%);
+        background: linear-gradient(45deg, #6c5ce7 25%, #a29bfe 25%, #a29bfe 50%, #6c5ce7 50%, #6c5ce7 75%, #a29bfe 75%);
         background-size: 50px 50px;
-        border: 10px solid #8B4513;
-        border-radius: 5px;
-        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+        border: 10px solid #5649c0;
+        border-radius: 15px;
+        box-shadow: 0 15px 30px rgba(0, 0, 0, 0.3);
         overflow: hidden;
+        transition: all 0.5s ease;
     }
     
     .signature-item {
@@ -22,10 +25,12 @@
         user-select: none;
         max-width: 200px;
         background-color: white;
-        padding: 5px;
+        padding: 10px;
+        padding-bottom: 25px; /* 为底部文字留出空间 */
         box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3);
         transition: box-shadow 0.2s ease, transform 0.05s ease-out;
-        border-radius: 3px;
+        border-radius: 8px;
+        margin: 10px; /* 添加外边距防止卡片紧贴 */
     }
     
     .signature-item:hover {
@@ -41,7 +46,21 @@
     
     .signature-item img {
         max-width: 100%;
-        border-radius: 2px;
+        border-radius: 6px;
+        margin-bottom: 8px;
+    }
+    
+    .signature-title {
+        background-color: rgba(255,255,255,0.9);
+        border-radius: 4px;
+        padding: 5px 8px;
+        font-size: 12px;
+        position: absolute;
+        bottom: 5px;
+        left: 5px;
+        right: 5px;
+        text-align: center;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
     }
     
     .signature-item.rotating {
@@ -112,10 +131,11 @@
     
     /* 缩放按钮 - 左下角 */
     .resize-handle {
-        bottom: -12px;
-        left: -12px;
+        bottom: -15px;
+        left: -15px;
         background-color: #28a745;
         cursor: nwse-resize;
+        z-index: 110; /* 确保按钮在顶层 */
     }
     
     .resize-handle i {
@@ -125,10 +145,11 @@
     
     /* 旋转按钮 - 右下角 */
     .rotate-handle {
-        bottom: -12px;
-        right: -12px;
+        bottom: -15px;
+        right: -15px;
         background-color: #007bff;
         cursor: grab;
+        z-index: 110; /* 确保按钮在顶层 */
     }
     
     .rotate-handle:active {
@@ -141,10 +162,11 @@
     
     /* 移动按钮 - 右上角 */
     .move-handle {
-        top: -12px;
-        right: -12px;
+        top: -15px;
+        right: -15px;
         background-color: #ffc107;
         cursor: move;
+        z-index: 110; /* 确保按钮在顶层 */
     }
     
     .move-handle i {

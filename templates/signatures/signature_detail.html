@@ -2,67 +2,118 @@
 
 {% block title %}{{ signature.title }} - 签名墙{% endblock %}
 
+{% block extra_css %}
+<link rel="stylesheet" href="/static/css/subpages.css">
+{% endblock %}
+
 {% block content %}
-<div class="card mb-4">
-    <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
-        <h3 class="card-title mb-0">{{ signature.title }}</h3>
-        {% if user == signature.user %}
-            <div>
-                <a href="{% url 'update_signature' signature.id %}" class="btn btn-sm btn-outline-light">编辑</a>
-                <a href="{% url 'delete_signature' signature.id %}" class="btn btn-sm btn-outline-danger">删除</a>
-            </div>
-        {% endif %}
-    </div>
-    <div class="card-body">
-        <div class="row">
-            <div class="col-md-6 mb-4 mb-md-0">
-                <div class="text-center">
-                    <img src="{{ signature.image.url }}" alt="{{ signature.title }}" class="img-fluid">
+<div class="page-header text-center">
+    <h1 class="display-5 fw-bold mb-3">{{ signature.title }}</h1>
+    <p class="lead mb-4">探索这个独特签名的风格和故事</p>
+</div>
+
+<div class="custom-card mb-4 fade-in">
+    <div class="card-body p-0">
+        <div class="row g-0">
+            <div class="col-md-6 signature-highlight">
+                <div class="p-4 text-center detail-image">
+                    <img src="{{ signature.image.url }}" alt="{{ signature.title }}" class="img-fluid animate-load">
                 </div>
             </div>
             <div class="col-md-6">
-                <h4>签名详情</h4>
-                <p>
-                    <strong>创建者:</strong> 
-                    <a href="{% url 'user_profile' signature.user.username %}">{{ signature.user.username }}</a>
-                </p>
-                <p><strong>上传时间:</strong> {{ signature.created_at|date:"Y年m月d日" }}</p>
-                {% if signature.description %}
-                    <div class="mt-3">
-                        <h5>描述</h5>
-                        <p>{{ signature.description }}</p>
-                    </div>
-                {% endif %}
-                
-                <div class="mt-4">
-                    <h5>相关文章</h5>
-                    {% if related_posts %}
-                        <div class="list-group">
-                            {% for post in related_posts %}
-                                <a href="{% url 'post_detail' post.id post.slug %}" class="list-group-item list-group-item-action">
-                                    {{ post.title }}
-                                    <span class="badge bg-secondary float-end">{{ post.published_date|date:"m-d" }}</span>
-                                </a>
-                            {% endfor %}
+                <div class="p-4">
+                    <div class="detail-header">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h3 class="fw-bold mb-0">签名详情</h3>
+                            {% if user == signature.user %}
+                                <div>
+                                    <a href="{% url 'update_signature' signature.id %}" class="btn btn-sm btn-outline-primary">
+                                        <i class="fas fa-edit me-1"></i> 编辑
+                                    </a>
+                                    <a href="{% url 'delete_signature' signature.id %}" class="btn btn-sm btn-outline-danger">
+                                        <i class="fas fa-trash me-1"></i> 删除
+                                    </a>
+                                </div>
+                            {% endif %}
                         </div>
-                    {% else %}
-                        <p class="text-muted">暂无与此签名相关的文章</p>
+                    </div>
+                    
+                    <div class="detail-info">
+                        <div class="detail-info-item">
+                            <i class="fas fa-user"></i>
+                            <span>创建者: 
+                                <a href="{% url 'user_profile' signature.user.username %}" class="text-decoration-none">
+                                    {{ signature.user.username }}
+                                </a>
+                            </span>
+                        </div>
                         
-                        {% if user == signature.user %}
-                            <a href="{% url 'create_post' %}" class="btn btn-sm btn-primary">
-                                创建关联文章
-                            </a>
-                        {% endif %}
+                        <div class="detail-info-item">
+                            <i class="far fa-calendar"></i>
+                            <span>上传时间: {{ signature.created_at|date:"Y年m月d日" }}</span>
+                        </div>
+                    </div>
+                    
+                    {% if signature.description %}
+                        <div class="mt-3">
+                            <h5 class="fw-bold"><i class="fas fa-info-circle me-2 text-primary"></i>描述</h5>
+                            <p>{{ signature.description }}</p>
+                        </div>
                     {% endif %}
+                
+                    <div class="related-items">
+                        <h5 class="fw-bold"><i class="fas fa-book me-2 text-primary"></i>相关文章</h5>
+                        {% if related_posts %}
+                            <div class="list-group">
+                                {% for post in related_posts %}
+                                    <a href="{% url 'post_detail' post.id post.slug %}" class="list-group-item list-group-item-action border-0 mb-2 rounded">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <div>
+                                                <i class="fas fa-file-alt me-2 text-primary"></i>
+                                                {{ post.title }}
+                                            </div>
+                                            <span class="badge rounded-pill bg-light text-dark">
+                                                {{ post.published_date|date:"m-d" }}
+                                            </span>
+                                        </div>
+                                    </a>
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            <div class="alert alert-light">
+                                <p class="mb-2">暂无与此签名相关的文章</p>
+                                
+                                {% if user == signature.user %}
+                                    <a href="{% url 'create_post' %}" class="btn btn-sm btn-primary btn-hover-effect">
+                                        <i class="fas fa-plus me-1"></i> 创建关联文章
+                                    </a>
+                                {% endif %}
+                            </div>
+                        {% endif %}
+                    </div>
                 </div>
             </div>
         </div>
     </div>
-    <div class="card-footer">
-        <a href="{% url 'signature_list' %}" class="btn btn-outline-primary">返回签名墙</a>
+    
+    <div class="d-flex justify-content-between mt-4">
+        <a href="{% url 'signature_list' %}" class="btn btn-outline-primary btn-hover-effect">
+            <i class="fas fa-arrow-left me-2"></i> 返回签名墙
+        </a>
+        
         {% if user == signature.user %}
-            <a href="{% url 'my_signatures' %}" class="btn btn-outline-secondary">我的签名</a>
+            <a href="{% url 'my_signatures' %}" class="btn btn-outline-primary btn-hover-effect">
+                <i class="fas fa-user me-2"></i> 我的签名
+            </a>
         {% endif %}
+        
+        <a href="{% url 'signature_board' %}" class="btn btn-outline-primary btn-hover-effect">
+            <i class="fas fa-th me-2"></i> 互动签名墙
+        </a>
     </div>
 </div>
+
+{% block extra_js %}
+<script src="/static/js/subpages.js"></script>
+{% endblock %}
 {% endblock %}

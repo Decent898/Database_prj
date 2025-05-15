@@ -1,0 +1,42 @@
+/* 修复标题问题的样式 */
+.gradient-header {
+    background: linear-gradient(135deg, #6c5ce7, #a29bfe);
+    color: white;
+    padding: 15px;
+    border-radius: 10px 10px 0 0;
+    border-bottom: none;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+}
+
+.gradient-header-light {
+    background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+    color: #495057;
+    padding: 15px;
+    border-radius: 10px 10px 0 0;
+    border-bottom: none;
+}
+
+/* 确保标题文字在深色背景上使用白色，在浅色背景上使用深色 */
+.gradient-header .card-title {
+    color: white !important;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.gradient-header-light .card-title {
+    color: #343a40 !important;
+}
+
+/* 针对按钮在深色背景上的样式调整 */
+.gradient-header .btn {
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* 增强对比度的通用类 */
+.text-contrast-white {
+    color: white !important;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+.text-contrast-dark {
+    color: #343a40 !important;
+}

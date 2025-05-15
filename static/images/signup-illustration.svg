@@ -1,0 +1,51 @@
+<svg width="400" height="300" xmlns="http://www.w3.org/2000/svg">
+  <style>
+    .signature {
+      stroke: #6c5ce7;
+      stroke-width: 3;
+      fill: none;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      animation: drawSignature 2s ease forwards;
+      stroke-dasharray: 1000;
+      stroke-dashoffset: 1000;
+    }
+    @keyframes drawSignature {
+      to {
+        stroke-dashoffset: 0;
+      }
+    }
+    .doc {
+      fill: #f8f9fa;
+      stroke: #e9ecef;
+      stroke-width: 1;
+    }
+    .accents {
+      fill: #6c5ce7;
+      opacity: 0.2;
+    }
+    .person {
+      fill: #6c5ce7;
+    }
+  </style>
+  
+  <!-- Background document -->
+  <rect class="doc" x="50" y="70" width="300" height="200" rx="10" ry="10" />
+  
+  <!-- Document lines -->
+  <line x1="80" y1="120" x2="320" y2="120" stroke="#e9ecef" stroke-width="1" />
+  <line x1="80" y1="160" x2="320" y2="160" stroke="#e9ecef" stroke-width="1" />
+  <line x1="80" y1="200" x2="320" y2="200" stroke="#e9ecef" stroke-width="1" />
+  
+  <!-- Accent shapes -->
+  <circle class="accents" cx="50" cy="50" r="30" />
+  <rect class="accents" x="330" y="30" width="40" height="40" rx="5" ry="5" transform="rotate(15, 350, 50)" />
+  <polygon class="accents" points="150,40 180,30 170,60" />
+  
+  <!-- Signature -->
+  <path class="signature" d="M100,180 C120,160 140,210 160,180 C180,150 200,200 220,170 C240,140 260,190 280,160 C290,150 300,170 310,160" />
+  
+  <!-- Person icon -->
+  <circle class="person" cx="200" cy="40" r="15" />
+  <path class="person" d="M180,70 C180,60 220,60 220,70 L215,90 L185,90 Z" />
+</svg>
