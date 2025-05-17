@@ -200,6 +200,7 @@ bash start_public_with_ngrok.sh
 
 ## 项目结构
 
+```text
 Database_prj/
 ├── accounts/           # 用户认证和个人资料管理
 │   ├── migrations/     # 数据库迁移文件
