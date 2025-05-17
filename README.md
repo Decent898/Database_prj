@@ -76,7 +76,7 @@
 
 1. **克隆项目**
 ```bash
-git clone hhttps://github.com/Decent898/Database_prj.git
+git clone https://github.com/Decent898/Database_prj.git
 cd Database_prj
 ```
 
