@@ -50,45 +50,9 @@
     .form-floating > label {
         padding-left: 20px;
     }
-    
-    .form-floating > .form-control {
+      .form-floating > .form-control {
         height: calc(3.5rem + 2px);
         padding: 1rem 1.25rem;
-    }
-    
-    .social-login-btn {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        padding: 12px 16px;
-        border-radius: 10px;
-        margin-bottom: 10px;
-        font-weight: 500;
-        transition: all 0.3s ease;
-    }
-    
-    .social-login-btn i {
-        margin-right: 10px;
-        font-size: 20px;
-    }
-    
-    .login-divider {
-        display: flex;
-        align-items: center;
-        margin: 25px 0;
-    }
-    
-    .login-divider::before,
-    .login-divider::after {
-        content: '';
-        flex: 1;
-        height: 1px;
-        background: #e9ecef;
-    }
-    
-    .login-divider span {
-        padding: 0 15px;
-        color: #6c757d;
     }
 </style>
 {% endblock %}
@@ -106,22 +70,7 @@
                 <i class="fas fa-user-circle fa-2x text-white"></i>
             </div>
             <h2 class="card-title text-center text-white mb-0">用户登录</h2>
-        </div>
-        <div class="card-body p-4">
-            <!-- 社交媒体登录按钮 -->
-            <div class="social-login mb-3">
-                <a href="#" class="btn btn-light social-login-btn w-100">
-                    <i class="fab fa-google text-danger"></i> 使用 Google 账户登录
-                </a>
-                <a href="#" class="btn btn-light social-login-btn w-100">
-                    <i class="fab fa-github text-dark"></i> 使用 GitHub 账户登录
-                </a>
-            </div>
-            
-            <div class="login-divider">
-                <span>或者使用邮箱登录</span>
-            </div>
-            
+        </div>        <div class="card-body p-4">
             <!-- 登录表单 -->
             <form method="POST" class="fade-in" style="animation-delay: 200ms;">
                 {% csrf_token %}
