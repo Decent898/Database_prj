@@ -2,9 +2,17 @@
  * 博客文章编辑器脚本
  */
 document.addEventListener('DOMContentLoaded', function() {
+    // 获取content textarea元素
+    const contentTextarea = document.getElementById('id_content');
+    
+    // 移除required属性，使用JavaScript验证代替
+    if (contentTextarea) {
+        contentTextarea.removeAttribute('required');
+    }
+    
     // 初始化编辑器
     var easyMDE = new EasyMDE({
-        element: document.getElementById('id_content'),
+        element: contentTextarea,
         autosave: {
             enabled: true,
             uniqueId: 'post_content_editor',
@@ -80,36 +88,40 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     });
-    
-    // 标签选择器功能
+      // 标签选择器功能
     const tagBadges = document.querySelectorAll('.tag-badge');
     const tagsSelect = document.getElementById('id_tags');
     
     // 初始化已选标签
     function initSelectedTags() {
-        const selectedOptions = Array.from(tagsSelect.selectedOptions);
-        const selectedIds = selectedOptions.map(option => option.value);
-        
-        tagBadges.forEach(badge => {
-            const tagId = badge.getAttribute('data-tag-id');
-            if (selectedIds.includes(tagId)) {
-                badge.classList.add('active');
-            }
-        });
+        // 检查tagsSelect是否存在并且有selectedOptions属性
+        if (tagsSelect && tagsSelect.selectedOptions) {
+            const selectedOptions = Array.from(tagsSelect.selectedOptions);
+            const selectedIds = selectedOptions.map(option => option.value);
+            
+            tagBadges.forEach(badge => {
+                const tagId = badge.getAttribute('data-tag-id');
+                if (selectedIds.includes(tagId)) {
+                    badge.classList.add('active');
+                }
+            });
+        }
     }
-    
-    // 绑定标签点击事件
+      // 绑定标签点击事件
     tagBadges.forEach(badge => {
         badge.addEventListener('click', function() {
             const tagId = this.getAttribute('data-tag-id');
             this.classList.toggle('active');
             
-            // 更新下拉选择框的值
-            const options = Array.from(tagsSelect.options);
-            const option = options.find(opt => opt.value === tagId);
-            
-            if (option) {
-                option.selected = this.classList.contains('active');
+            // 确保tagsSelect存在
+            if (tagsSelect) {
+                // 更新下拉选择框的值
+                const options = Array.from(tagsSelect.options || []);
+                const option = options.find(opt => opt.value === tagId);
+                
+                if (option) {
+                    option.selected = this.classList.contains('active');
+                }
             }
         });
     });
@@ -131,8 +143,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 .replace(/-+/g, '-');     // 替换多个连字符为单个连字符
         });
     }
-    
-    // 添加表单提交前的验证
+      // 添加表单提交前的验证
     document.getElementById('postForm').addEventListener('submit', function(e) {
         const title = document.getElementById('id_title').value.trim();
         const content = easyMDE.value().trim();
@@ -150,6 +161,13 @@ document.addEventListener('DOMContentLoaded', function() {
             easyMDE.codemirror.focus();
             return;
         }
+        
+        // 在提交前将内容写回原始的textarea
+        document.getElementById('id_content').value = content;
+        
+        // 移除required属性以避免浏览器验证隐藏元素
+        document.getElementById('id_content').removeAttribute('required');
+    });
     });
     
     // 为标题、内容添加淡入动画
