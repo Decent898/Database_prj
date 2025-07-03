@@ -32,39 +32,272 @@
     background: rgba(255, 255, 255, 0.1);
 }
 
-/* 卡片样式 */
+/* 卡片基础样式 */
 .custom-card {
     border: none;
     border-radius: 15px;
     box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
     transition: all 0.3s ease;
     overflow: hidden;
-    height: 100%;
+    position: relative;
+    background: white; /* 签名墙卡片使用白色背景 */
 }
 
+/* 签名卡片图片容器样式 */
+.card-img-container {
+    position: relative;
+    padding-bottom: 75%; /* 4:3的宽高比 */
+    height: 0;
+    overflow: hidden;
+    border-radius: 15px 15px 0 0;
+}
+
+.card-img-container img {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: contain; /* 保持图片比例 */
+    background-color: #f8f9fa;
+    padding: 0.5rem;
+}
+
+/* 确保签名���片内容布局正确 */
+.custom-card {
+    display: flex;
+    flex-direction: column;
+}
+
+.custom-card .card-body {
+    flex: 1;
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+}
+
+.custom-card .card-title {
+    margin-bottom: 0.75rem;
+    font-size: 1.1rem;
+}
+
+/* 博客文章卡片布局 */
+.blog-post-card {
+    position: relative;
+    border-left: 4px solid transparent;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    height: auto;
+    border-radius: 15px;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+}
+
+.blog-post-card .card-body {
+    flex: 1;
+    padding: 1.5rem;
+}
+
+/* 创建5种不同的渐变背景，仅用于博客文章 */
+.blog-post-card:nth-child(5n+1) {
+    background: linear-gradient(135deg, rgba(255,154,139,0.1), rgba(255,107,149,0.1));
+}
+
+.blog-post-card:nth-child(5n+2) {
+    background: linear-gradient(135deg, rgba(79,172,254,0.1), rgba(0,242,254,0.1));
+}
+
+.blog-post-card:nth-child(5n+3) {
+    background: linear-gradient(135deg, rgba(67,233,123,0.1), rgba(56,249,215,0.1));
+}
+
+.blog-post-card:nth-child(5n+4) {
+    background: linear-gradient(135deg, rgba(250,112,154,0.1), rgba(254,225,64,0.1));
+}
+
+.blog-post-card:nth-child(5n+5) {
+    background: linear-gradient(135deg, rgba(108,92,231,0.1), rgba(162,155,254,0.1));
+}
+
+/* 为博客文章添加装饰形状 */
+.blog-post-card:nth-child(5n+1)::before {
+    content: "";
+    position: absolute;
+    top: -20px;
+    right: -20px;
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.blog-post-card:nth-child(5n+2)::before {
+    content: "";
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    width: 40px;
+    height: 40px;
+    transform: rotate(45deg);
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.blog-post-card:nth-child(5n+3)::before {
+    content: "";
+    position: absolute;
+    bottom: -15px;
+    left: 50%;
+    width: 70px;
+    height: 70px;
+    border-radius: 30% 70% 70% 30% / 30% 30% 70% 70%;
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.blog-post-card:nth-child(5n+4)::before {
+    content: "";
+    position: absolute;
+    top: 50%;
+    right: -20px;
+    width: 50px;
+    height: 50px;
+    border-radius: 30% 70% 50% 50% / 50%;
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.blog-post-card:nth-child(5n+5)::before {
+    content: "";
+    position: absolute;
+    bottom: -30px;
+    right: 30px;
+    width: 80px;
+    height: 80px;
+    clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
+    background: rgba(255, 255, 255, 0.1);
+}
+
+/* 博客文章卡片悬停效果 */
+.blog-post-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 15px 30px rgba(0, 0, 0, 0.15);
+}
+
+/* 签名墙卡片悬停效果 */
 .custom-card:hover {
     transform: translateY(-5px);
     box-shadow: 0 15px 30px rgba(0, 0, 0, 0.15);
 }
 
-.card-img-container {
-    height: 200px;
-    overflow: hidden;
-    background-color: #f8f9fa;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+/* 调整博客文章卡片的文字颜色为黑色 */
+.blog-post-card .card-body {
+    color: rgb(0, 0, 0);
+    position: relative;
+    z-index: 1;
 }
 
-.card-img-container img {
-    max-height: 100%;
-    max-width: 100%;
-    object-fit: contain;
-    transition: transform 0.3s ease;
+.blog-post-card .card-title a,
+.blog-post-card .text-muted,
+.blog-post-card .blog-meta a {
+    color: rgb(0, 0, 0) !important;
 }
 
-.custom-card:hover .card-img-container img {
-    transform: scale(1.05);
+.blog-post-card .blog-meta {
+    opacity: 0.9;
+}
+
+/* 签名墙专用样式 - 隐藏文本，去掉边距，只显示图片 */
+.signature-item {
+    padding: 0 !important; /* 去掉内边距 */
+    background: transparent !important; /* 去掉背景色 */
+    box-shadow: none !important; /* 去掉阴影 */
+    border-radius: 0 !important; /* 去掉圆角 */
+    position: relative;
+    cursor: pointer;
+}
+
+.signature-item img {
+    margin: 0 !important; /* 去掉图片边距 */
+    border-radius: 8px; /* 保持图片圆角 */
+    display: block;
+    width: auto;
+    height: auto;
+    max-width: 200px;
+    max-height: 200px;
+    transition: all 0.2s ease;
+}
+
+/* 隐藏签名标题文本 */
+.signature-item .signature-title {
+    display: none !important;
+}
+
+/* 悬停工具提示样式 */
+.signature-tooltip {
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0, 0, 0, 0.9);
+    color: white;
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-size: 12px;
+    white-space: normal;
+    z-index: 1000;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+    margin-bottom: 5px;
+    max-width: 250px;
+    text-align: center;
+    word-wrap: break-word;
+}
+
+.signature-tooltip::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border: 5px solid transparent;
+    border-top-color: rgba(0, 0, 0, 0.9);
+}
+
+/* 悬停时显示工具提示 */
+.signature-item:hover .signature-tooltip {
+    opacity: 1;
+}
+
+/* 确保控制按钮在悬停时可见 */
+.signature-item:hover .control-btn {
+    opacity: 0.8;
+}
+
+/* 签名项悬停效果 */
+.signature-item:hover img {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    filter: brightness(1.1);
+}
+
+/* 拖拽时禁用悬停效果 */
+.signature-item.dragging .signature-tooltip {
+    display: none;
+}
+
+.signature-item.dragging img {
+    filter: none;
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+}
+
+/* 移除之前通用的白色文字样式 */
+.custom-card .card-body {
+    position: relative;
+    z-index: 1;
+}
+
+.custom-card .card-title a,
+.custom-card .blog-meta a {
+    text-decoration: none;
 }
 
 /* 签名样式 */
@@ -72,13 +305,6 @@
     margin-bottom: 2rem;
 }
 
-/* 博客文章样式 */
-.blog-post-card {
-    margin-bottom: 2rem;
-    border-left: 4px solid transparent;
-    transition: border-color 0.3s ease, box-shadow 0.3s ease;
-    overflow: hidden;
-}
 
 .blog-post-card:hover {
     border-left-color: #6c5ce7;
@@ -198,7 +424,7 @@
     transform: translateY(0);
 }
 
-/* 分页自定义样式 */
+/* 分页自定义样��� */
 .custom-pagination {
     margin-top: 2.5rem;
     margin-bottom: 1.5rem;
@@ -242,7 +468,7 @@
         flex-wrap: wrap;
         justify-content: center;
     }
-    
+
     .custom-pagination .page-item .page-link {
         width: 36px;
         height: 36px;

@@ -5,7 +5,7 @@ from django.utils import timezone
 
 class Signature(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='signatures')
-    image = models.ImageField(upload_to='signatures', help_text='上传您的手写签名')
+    image = models.ImageField(upload_to='signatures', blank=True, help_text='上传您的手写签名或使用画布绘制')
     title = models.CharField(max_length=100)
     description = models.TextField(blank=True, max_length=500)
     created_at = models.DateTimeField(default=timezone.now)

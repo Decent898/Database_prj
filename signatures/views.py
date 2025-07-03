@@ -6,6 +6,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.urls import reverse_lazy
 from django.http import JsonResponse
 from django.views.decorators.http import require_POST
+from django.utils import timezone
 import json
 from .models import Signature
 from .forms import SignatureForm
@@ -60,14 +61,80 @@ class SignatureDetailView(DetailView):
 def create_signature(request):
     """创建新签名"""
     if request.method == 'POST':
+        canvas_data = request.POST.get('canvas_data')
+        
+        print(f"DEBUG: Form data received: {request.POST}")
+        print(f"DEBUG: Canvas data present: {'Yes' if canvas_data else 'No'}")
+        print(f"DEBUG: Files uploaded: {list(request.FILES.keys())}")
+        
+        # 检查是否有图片或canvas数据
+        if not request.FILES.get('image') and not canvas_data:
+            messages.error(request, '请上传一张图片或使用手绘功能创建签名！')
+            form = SignatureForm(request.POST)
+            return render(request, 'signatures/signature_form.html', {'form': form})
+        
         form = SignatureForm(request.POST, request.FILES)
+        
+        print(f"DEBUG: Form is valid: {form.is_valid()}")
+        
+        if not form.is_valid():
+            print(f"DEBUG: Form errors: {form.errors}")
+        
         if form.is_valid():
             signature = form.save(commit=False)
             signature.user = request.user
+            
+            # 处理canvas数据
+            if canvas_data and canvas_data.startswith('data:image/png;base64,'):
+                import base64
+                import io
+                from django.core.files.base import ContentFile
+                from PIL import Image
+                
+                try:
+                    print("DEBUG: Processing canvas data...")
+                    # 解码base64数据
+                    format, imgstr = canvas_data.split(';base64,')
+                    image_data = base64.b64decode(imgstr)
+                    
+                    # 创建图片文件
+                    image = Image.open(io.BytesIO(image_data))
+                    
+                    # 转换为RGB模式（如果需要）并优化大小
+                    if image.mode == 'RGBA':
+                        # 保持透明背景
+                        image = image.convert('RGBA')
+                    else:
+                        image = image.convert('RGB')
+                    
+                    # 保存为PNG格式以保持透明度
+                    output = io.BytesIO()
+                    image.save(output, format='PNG', optimize=True)
+                    output.seek(0)
+                    
+                    # 创建Django文件对象
+                    filename = f"signature_{request.user.username}_{signature.title[:20]}_{int(timezone.now().timestamp())}.png"
+                    signature.image.save(
+                        filename,
+                        ContentFile(output.getvalue()),
+                        save=False
+                    )
+                    print("DEBUG: Canvas data processed successfully")
+                    
+                except Exception as e:
+                    print(f"DEBUG: Error processing canvas data: {str(e)}")
+                    messages.error(request, f'处理手绘签名时出错: {str(e)}')
+                    return render(request, 'signatures/signature_form.html', {'form': form})
+            
             # 表单的save方法中已处理位置和角度
-            signature.save()
-            messages.success(request, '您的签名已成功上传！')
-            return redirect('signature_detail', pk=signature.pk)
+            try:
+                signature.save()
+                print("DEBUG: Signature saved successfully")
+                messages.success(request, '您的签名已成功上传！')
+                return redirect('signature_detail', pk=signature.pk)
+            except Exception as e:
+                print(f"DEBUG: Error saving signature: {str(e)}")
+                messages.error(request, f'保存签名时出错: {str(e)}')
     else:
         form = SignatureForm()
     

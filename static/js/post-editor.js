@@ -54,9 +54,13 @@ document.addEventListener('DOMContentLoaded', function() {
     const tabNavItems = document.querySelectorAll('.tab-nav-item');
     const tabContents = document.querySelectorAll('.tab-content');
     
+    console.log('找到的标签页导航项:', tabNavItems.length);
+    console.log('找到的标签页内容:', tabContents.length);
+    
     tabNavItems.forEach(item => {
         item.addEventListener('click', function() {
             const target = this.getAttribute('data-target');
+            console.log('点击的标签页:', target);
             
             // 更新标签页状态
             tabNavItems.forEach(i => i.classList.remove('active'));
@@ -64,7 +68,13 @@ document.addEventListener('DOMContentLoaded', function() {
             
             // 更新内容区域状态
             tabContents.forEach(c => c.classList.add('d-none'));
-            document.getElementById(target).classList.remove('d-none');
+            const targetElement = document.getElementById(target);
+            if (targetElement) {
+                targetElement.classList.remove('d-none');
+                console.log('切换到标签页:', target);
+            } else {
+                console.error('找不到目标元素:', target);
+            }
             
             // 如果是预览标签页，更新预览内容
             if (target === 'previewTab') {
@@ -88,7 +98,8 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     });
-      // 标签选择器功能
+    
+    // 标签选择器功能
     const tagBadges = document.querySelectorAll('.tag-badge');
     const tagsSelect = document.getElementById('id_tags');
     
@@ -107,7 +118,8 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         }
     }
-      // 绑定标签点击事件
+    
+    // 绑定标签点击事件
     tagBadges.forEach(badge => {
         badge.addEventListener('click', function() {
             const tagId = this.getAttribute('data-tag-id');
@@ -134,7 +146,7 @@ document.addEventListener('DOMContentLoaded', function() {
     var slugInput = document.getElementById('id_slug');
     
     // 只在创建新文章且slug未填写时自动生成
-    if (!slugInput.value) {
+    if (titleInput && slugInput && !slugInput.value) {
         titleInput.addEventListener('input', function() {
             slugInput.value = titleInput.value
                 .toLowerCase()
@@ -143,32 +155,35 @@ document.addEventListener('DOMContentLoaded', function() {
                 .replace(/-+/g, '-');     // 替换多个连字符为单个连字符
         });
     }
-      // 添加表单提交前的验证
-    document.getElementById('postForm').addEventListener('submit', function(e) {
-        const title = document.getElementById('id_title').value.trim();
-        const content = easyMDE.value().trim();
-        
-        if (!title) {
-            e.preventDefault();
-            alert('请填写文章标题');
-            document.getElementById('id_title').focus();
-            return;
-        }
-        
-        if (!content) {
-            e.preventDefault();
-            alert('请填写文章内容');
-            easyMDE.codemirror.focus();
-            return;
-        }
-        
-        // 在提交前将内容写回原始的textarea
-        document.getElementById('id_content').value = content;
-        
-        // 移除required属性以避免浏览器验证隐藏元素
-        document.getElementById('id_content').removeAttribute('required');
-    });
-    });
+    
+    // 添加表单提交前的验证
+    const postForm = document.getElementById('postForm');
+    if (postForm) {
+        postForm.addEventListener('submit', function(e) {
+            const title = document.getElementById('id_title').value.trim();
+            const content = easyMDE.value().trim();
+            
+            if (!title) {
+                e.preventDefault();
+                alert('请填写文章标题');
+                document.getElementById('id_title').focus();
+                return;
+            }
+            
+            if (!content) {
+                e.preventDefault();
+                alert('请填写文章内容');
+                easyMDE.codemirror.focus();
+                return;
+            }
+            
+            // 在提交前将内容写回原始的textarea
+            document.getElementById('id_content').value = content;
+            
+            // 移除required属性以避免浏览器验证隐藏元素
+            document.getElementById('id_content').removeAttribute('required');
+        });
+    }
     
     // 为标题、内容添加淡入动画
     const fadeElements = document.querySelectorAll('.fade-in');

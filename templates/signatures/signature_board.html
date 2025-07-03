@@ -50,19 +50,6 @@
         margin-bottom: 8px;
     }
     
-    .signature-title {
-        background-color: rgba(255,255,255,0.9);
-        border-radius: 4px;
-        padding: 5px 8px;
-        font-size: 12px;
-        position: absolute;
-        bottom: 5px;
-        left: 5px;
-        right: 5px;
-        text-align: center;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-    }
-    
     .signature-item.rotating {
         transition: transform 0.05s ease;
     }
@@ -559,9 +546,16 @@
                  style="transform: translate({{ signature.position_x }}px, {{ signature.position_y }}px) rotate({{ signature.rotation }}deg) scale({{ signature.scale }});
                         z-index: {{ signature.z_index }};">
                 <img src="{{ signature.image.url }}" alt="{{ signature.title }}">
-                <div class="signature-title p-1">
-                    <small>{{ signature.title }} - {{ signature.user.username }}</small>
+                
+                <!-- 悬停工具提示 -->
+                <div class="signature-tooltip">
+                    <strong>{{ signature.title }}</strong><br>
+                    作者: {{ signature.user.username }}
+                    {% if signature.description %}
+                    <br>{{ signature.description|truncatechars:50 }}
+                    {% endif %}
                 </div>
+                
                 {% if user.is_authenticated %}
                     {% if user.id == signature.user.id or user.is_staff %}
                     <!-- 移动按钮 - 右上角 -->

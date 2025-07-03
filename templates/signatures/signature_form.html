@@ -92,6 +92,95 @@
         background-color: #5649c0;
         transform: translateY(-2px);
     }
+    
+    /* 选项卡样式 */
+    .nav-tabs .nav-link {
+        border-radius: 10px 10px 0 0;
+        border: 2px solid transparent;
+        margin-right: 5px;
+        color: #6c5ce7;
+        font-weight: 500;
+    }
+    
+    .nav-tabs .nav-link.active {
+        background-color: #6c5ce7;
+        color: white;
+        border-color: #6c5ce7;
+    }
+    
+    .tab-content {
+        border: 2px solid #e6e6e6;
+        border-radius: 0 10px 10px 10px;
+        padding: 20px;
+        background-color: white;
+    }
+    
+    /* Canvas样式 */
+    .canvas-container {
+        border: 2px dashed #e6e6e6;
+        border-radius: 10px;
+        background-color: #ffffff;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 400px;
+        position: relative;
+    }
+    
+    #signatureCanvas {
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        cursor: crosshair;
+        background-color: white;
+    }
+    
+    .canvas-controls {
+        margin-top: 15px;
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+    
+    .color-picker {
+        display: flex;
+        gap: 5px;
+        align-items: center;
+    }
+    
+    .color-option {
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        border: 2px solid #ddd;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+    
+    .color-option.active {
+        border-color: #6c5ce7;
+        transform: scale(1.1);
+    }
+    
+    .brush-size {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    
+    .brush-size input {
+        width: 80px;
+    }
+    
+    .canvas-info {
+        background-color: #f8f9fa;
+        border-radius: 8px;
+        padding: 15px;
+        margin-top: 15px;
+        text-align: center;
+        color: #6c757d;
+    }
 </style>
 {% endblock %}
 
@@ -118,29 +207,93 @@
                     <form method="POST" enctype="multipart/form-data" id="signatureForm">
                         {% csrf_token %}
                         
-                        <!-- 上传区域 -->
-                        <div class="upload-area" id="dropArea">
-                            <div class="upload-icon">
-                                <i class="fas fa-upload"></i>
+                        <!-- 选项卡导航 -->
+                        <ul class="nav nav-tabs" id="uploadTabs" role="tablist">
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link active" id="upload-tab" data-bs-toggle="tab" data-bs-target="#upload-panel" type="button" role="tab">
+                                    <i class="fas fa-upload me-2"></i>上传文件
+                                </button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="draw-tab" data-bs-toggle="tab" data-bs-target="#draw-panel" type="button" role="tab">
+                                    <i class="fas fa-paint-brush me-2"></i>手绘签名
+                                </button>
+                            </li>
+                        </ul>
+                        
+                        <!-- 选项卡内容 -->
+                        <div class="tab-content" id="uploadTabContent">
+                            <!-- 上传文件面板 -->
+                            <div class="tab-pane fade show active" id="upload-panel" role="tabpanel">
+                                <!-- 上传区域 -->
+                                <div class="upload-area" id="dropArea">
+                                    <div class="upload-icon">
+                                        <i class="fas fa-upload"></i>
+                                    </div>
+                                    <h4>点击或拖放文件上传</h4>
+                                    <p class="text-muted">支持 PNG、JPG、WEBP 格式，最大 5MB</p>
+                                    <input type="file" name="{{ form.image.name }}" id="id_image" class="file-input" accept="image/*">
+                                    <label for="id_image" class="custom-file-button">选择文件</label>
+                                </div>
+                                
+                                <!-- 图片预览区域 -->
+                                <div class="preview-container d-none" id="previewContainer">
+                                    <img src="#" alt="签名预览" class="preview-image" id="previewImage">
+                                    <div class="mt-2">
+                                        <button type="button" class="btn btn-sm btn-outline-danger" id="removeImage">
+                                            <i class="fas fa-times"></i> 移除
+                                        </button>
+                                    </div>
+                                </div>
                             </div>
-                            <h4>点击或拖放文件上传</h4>
-                            <p class="text-muted">支持 PNG、JPG、WEBP 格式，最大 5MB</p>
-                            <input type="file" name="{{ form.image.name }}" id="id_image" class="file-input" accept="image/*">
-                            <label for="id_image" class="custom-file-button">选择文件</label>
+                            
+                            <!-- 手绘签名面板 -->
+                            <div class="tab-pane fade" id="draw-panel" role="tabpanel">
+                                <div class="canvas-container">
+                                    <canvas id="signatureCanvas" width="600" height="300"></canvas>
+                                </div>
+                                <div class="canvas-controls">
+                                    <div class="color-picker">
+                                        <span class="me-2">画笔颜色:</span>
+                                        <div class="color-option active" data-color="#000000" style="background-color: #000000;" title="黑色"></div>
+                                        <div class="color-option" data-color="#0066cc" style="background-color: #0066cc;" title="蓝色"></div>
+                                        <div class="color-option" data-color="#cc0000" style="background-color: #cc0000;" title="红色"></div>
+                                        <div class="color-option" data-color="#00cc00" style="background-color: #00cc00;" title="绿色"></div>
+                                        <div class="color-option" data-color="#6c5ce7" style="background-color: #6c5ce7;" title="紫色"></div>
+                                    </div>
+                                    <div class="brush-size">
+                                        <span>画笔大小:</span>
+                                        <input type="range" id="brushSize" min="1" max="10" value="2" class="form-range">
+                                        <span id="brushSizeValue">2</span>px
+                                    </div>
+                                    <div class="form-check form-switch">
+                                        <input class="form-check-input" type="checkbox" id="transparentBackground" checked>
+                                        <label class="form-check-label" for="transparentBackground">
+                                            透明背景
+                                        </label>
+                                    </div>
+                                    <button type="button" class="btn btn-outline-secondary" id="undoCanvas" title="撤回上一步">
+                                        <i class="fas fa-undo"></i> 撤回
+                                    </button>
+                                    <button type="button" class="btn btn-outline-warning" id="clearCanvas">
+                                        <i class="fas fa-eraser"></i> 清除
+                                    </button>
+                                    <button type="button" class="btn btn-outline-primary" id="saveCanvas">
+                                        <i class="fas fa-save"></i> 保存手绘
+                                    </button>
+                                </div>
+                                <div class="canvas-info">
+                                    <i class="fas fa-info-circle me-2"></i>
+                                    <span id="canvasStatus">在画布上绘制您的签名，完成后点击"保存手绘"按钮</span>
+                                </div>
+                            </div>
                         </div>
                         
-                        <!-- 图片预览区域 -->
-                        <div class="preview-container d-none" id="previewContainer">
-                            <img src="#" alt="签名预览" class="preview-image" id="previewImage">
-                            <div class="mt-2">
-                                <button type="button" class="btn btn-sm btn-outline-danger" id="removeImage">
-                                    <i class="fas fa-times"></i> 移除
-                                </button>
-                            </div>
-                        </div>
+                        <!-- 隐藏的画布数据输入框 -->
+                        <input type="hidden" id="canvasData" name="canvas_data">
                         
                         <!-- 表单字段 -->
-                        <div class="row">
+                        <div class="row mt-4">
                             <div class="col-md-6">
                                 {{ form.title|as_crispy_field }}
                             </div>
@@ -179,6 +332,16 @@
                 </div>
                 <div class="card-body p-4">
                     <div class="tip-card p-3">
+                        <div class="tip-item">
+                            <div class="tip-icon">
+                                <i class="fas fa-paint-brush"></i>
+                            </div>
+                            <div>
+                                <strong>手绘签名功能</strong>
+                                <p class="text-muted mb-0 small">使用画布直接绘制您的个性签名</p>
+                            </div>
+                        </div>
+                        
                         <div class="tip-item">
                             <div class="tip-icon">
                                 <i class="fas fa-image"></i>
@@ -246,11 +409,254 @@
         const previewImage = document.getElementById('previewImage');
         const removeImageBtn = document.getElementById('removeImage');
         
+        // Canvas相关元素
+        const canvas = document.getElementById('signatureCanvas');
+        const ctx = canvas.getContext('2d');
+        const colorOptions = document.querySelectorAll('.color-option');
+        const brushSizeSlider = document.getElementById('brushSize');
+        const brushSizeValue = document.getElementById('brushSizeValue');
+        const clearCanvasBtn = document.getElementById('clearCanvas');
+        const saveCanvasBtn = document.getElementById('saveCanvas');
+        const canvasDataInput = document.getElementById('canvasData');
+        const undoBtn = document.getElementById('undoCanvas');
+        const transparentBgCheck = document.getElementById('transparentBackground');
+        
+        // Canvas绘画状态
+        let isDrawing = false;
+        let currentColor = '#000000';
+        let currentBrushSize = 2;
+        
+        // 撤回功能：存储历史状态
+        let undoStack = [];
+        const MAX_UNDO_STACK = 50; // 最多存储50步历史
+        
+        // 初始化Canvas
+        function initCanvas() {
+            // 默认为透明背景
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // 设置绘画参数
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+            ctx.strokeStyle = currentColor;
+            ctx.lineWidth = currentBrushSize;
+            
+            // 保存初始状态
+            saveCanvasState();
+        }
+        
+        // 保存Canvas状态到撤回栈
+        function saveCanvasState() {
+            undoStack.push(ctx.getImageData(0, 0, canvas.width, canvas.height));
+            
+            // 限制撤回栈大小
+            if (undoStack.length > MAX_UNDO_STACK) {
+                undoStack.shift();
+            }
+            
+            // 更新撤回按钮状态
+            undoBtn.disabled = undoStack.length <= 1;
+        }
+        
+        // 执行撤回
+        function undoCanvas() {
+            if (undoStack.length > 1) {
+                undoStack.pop(); // 移除当前状态
+                const previousState = undoStack[undoStack.length - 1];
+                ctx.putImageData(previousState, 0, 0);
+                
+                // 更新按钮状态
+                undoBtn.disabled = undoStack.length <= 1;
+            }
+        }
+        
+        // 获取鼠标/触摸在Canvas上的坐标
+        function getMousePos(e) {
+            const rect = canvas.getBoundingClientRect();
+            const scaleX = canvas.width / rect.width;
+            const scaleY = canvas.height / rect.height;
+            
+            return {
+                x: (e.clientX - rect.left) * scaleX,
+                y: (e.clientY - rect.top) * scaleY
+            };
+        }
+        
+        // 开始绘画
+        function startDrawing(e) {
+            isDrawing = true;
+            const pos = getMousePos(e);
+            ctx.beginPath();
+            ctx.moveTo(pos.x, pos.y);
+        }
+        
+        // 绘画中
+        function draw(e) {
+            if (!isDrawing) return;
+            
+            const pos = getMousePos(e);
+            ctx.lineTo(pos.x, pos.y);
+            ctx.stroke();
+        }
+        
+        // 结束绘画
+        function stopDrawing() {
+            if (isDrawing) {
+                ctx.closePath();
+                isDrawing = false;
+                // 绘制完成后保存状态
+                saveCanvasState();
+            }
+        }
+        
+        // 鼠标事件
+        canvas.addEventListener('mousedown', startDrawing);
+        canvas.addEventListener('mousemove', draw);
+        canvas.addEventListener('mouseup', stopDrawing);
+        canvas.addEventListener('mouseout', stopDrawing);
+        
+        // 触摸事件（移动设备支持）
+        canvas.addEventListener('touchstart', function(e) {
+            e.preventDefault();
+            const touch = e.touches[0];
+            const mouseEvent = new MouseEvent('mousedown', {
+                clientX: touch.clientX,
+                clientY: touch.clientY
+            });
+            canvas.dispatchEvent(mouseEvent);
+        });
+        
+        canvas.addEventListener('touchmove', function(e) {
+            e.preventDefault();
+            const touch = e.touches[0];
+            const mouseEvent = new MouseEvent('mousemove', {
+                clientX: touch.clientX,
+                clientY: touch.clientY
+            });
+            canvas.dispatchEvent(mouseEvent);
+        });
+        
+        canvas.addEventListener('touchend', function(e) {
+            e.preventDefault();
+            const mouseEvent = new MouseEvent('mouseup', {});
+            canvas.dispatchEvent(mouseEvent);
+        });
+        
+        // 颜色选择
+        colorOptions.forEach(option => {
+            option.addEventListener('click', function() {
+                colorOptions.forEach(opt => opt.classList.remove('active'));
+                this.classList.add('active');
+                currentColor = this.getAttribute('data-color');
+                ctx.strokeStyle = currentColor;
+            });
+        });
+        
+        // 画笔大小调整
+        brushSizeSlider.addEventListener('input', function() {
+            currentBrushSize = this.value;
+            brushSizeValue.textContent = this.value;
+            ctx.lineWidth = currentBrushSize;
+        });
+        
+        // 清除画布
+        clearCanvasBtn.addEventListener('click', function() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            canvasDataInput.value = '';
+            
+            // 重置撤回栈
+            undoStack = [];
+            saveCanvasState();
+        });
+        
+        // 撤回功能
+        undoBtn.addEventListener('click', undoCanvas);
+        
+        // 保存画布
+        saveCanvasBtn.addEventListener('click', function() {
+            // 根据透明背景设置决定保存格式
+            const isTransparent = transparentBgCheck.checked;
+            let dataURL;
+            
+            if (isTransparent) {
+                // 透明背景，直接保存为PNG
+                dataURL = canvas.toDataURL('image/png');
+            } else {
+                // 白色背景，需要先绘制白色背景
+                const tempCanvas = document.createElement('canvas');
+                tempCanvas.width = canvas.width;
+                tempCanvas.height = canvas.height;
+                const tempCtx = tempCanvas.getContext('2d');
+                
+                // 绘制白色背景
+                tempCtx.fillStyle = 'white';
+                tempCtx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
+                
+                // 绘制原始内容
+                tempCtx.drawImage(canvas, 0, 0);
+                
+                dataURL = tempCanvas.toDataURL('image/png');
+            }
+            
+            canvasDataInput.value = dataURL;
+            
+            // 显示预览
+            previewImage.src = dataURL;
+            previewContainer.classList.remove('d-none');
+            
+            // 切换到上传文件选项卡以显示预览
+            const uploadTab = document.getElementById('upload-tab');
+            const uploadPanel = document.getElementById('upload-panel');
+            const drawTab = document.getElementById('draw-tab');
+            const drawPanel = document.getElementById('draw-panel');
+            
+            uploadTab.classList.add('active');
+            uploadPanel.classList.add('show', 'active');
+            drawTab.classList.remove('active');
+            drawPanel.classList.remove('show', 'active');
+            
+            // 改为更友好的视觉提示，不使用alert
+            const saveBtn = document.querySelector('button[type="submit"]');
+            const originalText = saveBtn.innerHTML;
+            saveBtn.innerHTML = '<i class="fas fa-check"></i> 手绘签名已准备好，可以保存！';
+            saveBtn.classList.add('btn-success');
+            saveBtn.classList.remove('btn-purple');
+            
+            // 更新画布状态提示
+            const canvasStatus = document.getElementById('canvasStatus');
+            const originalStatus = canvasStatus.innerHTML;
+            canvasStatus.innerHTML = '<i class="fas fa-check-circle text-success me-2"></i>手绘签名已保存到预览区域，现在可以提交表单了！';
+            
+            // 3秒后恢复原始状态
+            setTimeout(() => {
+                saveBtn.innerHTML = originalText;
+                saveBtn.classList.remove('btn-success');
+                saveBtn.classList.add('btn-purple');
+                canvasStatus.innerHTML = originalStatus;
+            }, 3000);
+        });
+        
+        // 初始化Canvas
+        initCanvas();
+        
+        // 初始化撤回按钮状态
+        undoBtn.disabled = true;
+        
         // 显示现有图片预览（如果是编辑模式）
         {% if form.instance.image %}
         const existingImageUrl = "{{ form.instance.image.url }}";
         previewImage.src = existingImageUrl;
         previewContainer.classList.remove('d-none');
+        {% endif %}
+        
+        // 如果有canvas数据（表单验证失败时保持数据）
+        {% if form.canvas_data %}
+        const savedCanvasData = "{{ form.canvas_data }}";
+        if (savedCanvasData) {
+            canvasDataInput.value = savedCanvasData;
+            previewImage.src = savedCanvasData;
+            previewContainer.classList.remove('d-none');
+        }
         {% endif %}
         
         // 处理拖放事件
@@ -288,6 +694,8 @@
             if (files.length) {
                 fileInput.files = files;
                 updatePreview(files[0]);
+                // 清除画布数据
+                canvasDataInput.value = '';
             }
         }
         
@@ -295,6 +703,8 @@
         fileInput.addEventListener('change', function() {
             if (this.files.length) {
                 updatePreview(this.files[0]);
+                // 清除画布数据
+                canvasDataInput.value = '';
             }
         });
         
@@ -313,7 +723,18 @@
         // 移除图片
         removeImageBtn.addEventListener('click', function() {
             fileInput.value = '';
+            canvasDataInput.value = '';
             previewContainer.classList.add('d-none');
+        });
+        
+        // 表单提交处理
+        document.getElementById('signatureForm').addEventListener('submit', function(e) {
+            // 检查是否有图片或画布数据
+            if (!fileInput.files.length && !canvasDataInput.value) {
+                e.preventDefault();
+                alert('请上传一张图片或使用手绘功能创建签名！');
+                return false;
+            }
         });
     });
 </script>

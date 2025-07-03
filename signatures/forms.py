@@ -13,6 +13,23 @@ class SignatureForm(forms.ModelForm):
             'is_public': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
         }
     
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # 当使用canvas时，image字段不是必需的
+        self.fields['image'].required = False
+    
+    def clean(self):
+        cleaned_data = super().clean()
+        image = cleaned_data.get('image')
+        
+        # 检查是否有canvas数据（这将在视图中处理）
+        # 如果没有image也没有canvas数据，则抛出验证错误
+        if not image:
+            # 这个检查将在视图中进行，因为canvas_data不在表单字段中
+            pass
+        
+        return cleaned_data
+    
     def save(self, commit=True):
         instance = super().save(commit=False)
         # 设置随机的初始位置和角度
