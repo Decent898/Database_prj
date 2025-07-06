@@ -8,7 +8,7 @@ from django.http import JsonResponse
 from django.views.decorators.http import require_POST
 from django.utils import timezone
 import json
-from .models import Signature, SignatureBoard
+from .models import Signature, SignatureBoard, SignaturePlacement
 from .forms import SignatureForm, SignatureBoardForm
 
 # ===== 签名墙相关视图 =====
@@ -31,23 +31,28 @@ class SignatureBoardDetailView(DetailView):
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        # 获取属于该签名墙的所有公开签名
-        context['signatures'] = Signature.objects.filter(
+        # 通过SignaturePlacement获取属于该签名墙的所有可见签名及其位置信息
+        placements = SignaturePlacement.objects.filter(
             board=self.object,
-            is_public=True
-        )
+            is_public=True  # 修正：使用 is_public 字段
+        ).select_related('signature', 'signature__user')
+
+        # 传递placements给模板，模板将从中获取签名和位置信息
+        context['placements'] = placements
+        # 为了向后兼容或简化模板逻辑，可以保留一个signatures列表
+        context['signatures'] = [p.signature for p in placements]
         return context
 
 @login_required
 def create_signature_board(request):
-    """创建新签名墙"""
+    """创建新的签名墙"""
     if request.method == 'POST':
         form = SignatureBoardForm(request.POST)
         if form.is_valid():
             board = form.save(commit=False)
             board.created_by = request.user
             board.save()
-            messages.success(request, '您的签名墙已成功创建！')
+            messages.success(request, '签名墙创建成功！')
             return redirect('signature_board_detail', pk=board.pk)
     else:
         form = SignatureBoardForm()
@@ -123,111 +128,7 @@ class SignatureDetailView(DetailView):
     model = Signature
     template_name = 'signatures/signature_detail.html'
     
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        # 获取相关博客文章
-        signature = self.get_object()
-        if hasattr(signature, 'related_posts'):
-            context['related_posts'] = signature.related_posts[:5]
-        return context
-
-@login_required
-def create_signature(request, board_id=None):
-    """创建新签名，可选择关联到特定签名墙"""
-    board = None
-    if board_id:
-        board = get_object_or_404(SignatureBoard, pk=board_id)
-    
-    if request.method == 'POST':
-        canvas_data = request.POST.get('canvas_data')
-        
-        print(f"DEBUG: Form data received: {request.POST}")
-        print(f"DEBUG: Canvas data present: {'Yes' if canvas_data else 'No'}")
-        print(f"DEBUG: Files uploaded: {list(request.FILES.keys())}")
-        
-        # 检查是否有图片或canvas数据
-        if not request.FILES.get('image') and not canvas_data:
-            messages.error(request, '请上传一张图片或使用手绘功能创建签名！')
-            form = SignatureForm(request.POST, user=request.user)
-            return render(request, 'signatures/signature_form.html', {'form': form, 'board': board})
-        
-        form = SignatureForm(request.POST, request.FILES, user=request.user)
-        
-        print(f"DEBUG: Form is valid: {form.is_valid()}")
-        
-        if not form.is_valid():
-            print(f"DEBUG: Form errors: {form.errors}")
-        
-        if form.is_valid():
-            signature = form.save(commit=False)
-            signature.user = request.user
-            
-            # 如果指定了board_id，则关联到该签名墙
-            if board_id and not signature.board:
-                signature.board = board
-            
-            # 处理canvas数据
-            if canvas_data and canvas_data.startswith('data:image/png;base64,'):
-                import base64
-                import io
-                from django.core.files.base import ContentFile
-                from PIL import Image
-                
-                try:
-                    print("DEBUG: Processing canvas data...")
-                    # 解码base64数据
-                    format, imgstr = canvas_data.split(';base64,')
-                    image_data = base64.b64decode(imgstr)
-                    
-                    # 创建图片文件
-                    image = Image.open(io.BytesIO(image_data))
-                    
-                    # 转换为RGB模式（如果需要）并优化大小
-                    if image.mode == 'RGBA':
-                        # 保持透明背景
-                        image = image.convert('RGBA')
-                    else:
-                        image = image.convert('RGB')
-                    
-                    # 保存为PNG格式以保持透明度
-                    output = io.BytesIO()
-                    image.save(output, format='PNG', optimize=True)
-                    output.seek(0)
-                    
-                    # 创建Django文件对象
-                    filename = f"signature_{request.user.username}_{signature.title[:20]}_{int(timezone.now().timestamp())}.png"
-                    signature.image.save(
-                        filename,
-                        ContentFile(output.getvalue()),
-                        save=False
-                    )
-                    print("DEBUG: Canvas data processed successfully")
-                    
-                except Exception as e:
-                    print(f"DEBUG: Error processing canvas data: {str(e)}")
-                    messages.error(request, f'处理手绘签名时出错: {str(e)}')
-                    return render(request, 'signatures/signature_form.html', {'form': form, 'board': board})
-            
-            # 表单的save方法中已处理位置和角度
-            try:
-                signature.save()
-                print("DEBUG: Signature saved successfully")
-                messages.success(request, '您的签名已成功上传！')
-                
-                # 如果是从签名墙创建的，则返回到签名墙页面
-                if board:
-                    return redirect('signature_board_detail', pk=board.pk)
-                return redirect('signature_detail', pk=signature.pk)
-            except Exception as e:
-                print(f"DEBUG: Error saving signature: {str(e)}")
-                messages.error(request, f'保存签名时出错: {str(e)}')
-    else:
-        initial_data = {}
-        if board:
-            initial_data['board'] = board.pk
-        form = SignatureForm(initial=initial_data, user=request.user)
-    
-    return render(request, 'signatures/signature_form.html', {'form': form, 'board': board})
+    # 移除了 get_context_data, 因为 related_posts 不再存在
 
 class SignatureUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
     """更新签名"""
@@ -261,103 +162,154 @@ def my_signatures(request):
     return render(request, 'signatures/my_signatures.html', {'signatures': signatures})
 
 @login_required
+def create_signature(request, board_id=None):
+    """创建新签名，并可选择性地关联到特定签名墙"""
+    board = None
+    if board_id:
+        board = get_object_or_404(SignatureBoard, pk=board_id)
+
+    if request.method == 'POST':
+        form = SignatureForm(request.POST, request.FILES, user=request.user)
+        if form.is_valid():
+            signature = form.save(commit=False)
+            signature.user = request.user
+            signature.save()
+            
+            # 如果有关联的签名墙，则创建 SignaturePlacement
+            if board:
+                SignaturePlacement.objects.create(
+                    signature=signature,
+                    board=board,
+                    # 可以在这里设置初始位置等
+                )
+                messages.success(request, f'签名已成功创建并添加到“{board.title}”墙上！')
+                return redirect('signature_board_detail', pk=board.pk)
+            
+            messages.success(request, '签名创建成功！')
+            return redirect('my_signatures')
+    else:
+        form = SignatureForm(user=request.user)
+
+    return render(request, 'signatures/signature_form.html', {
+        'form': form,
+        'board': board
+    })
+
+@login_required
 @require_POST
 def save_signature_positions(request, board_id=None):
     """保存签名位置、角度和大小的AJAX端点"""
     try:
+        # 确认操作的是哪个签名墙
+        board = get_object_or_404(SignatureBoard, pk=board_id)
         data = json.loads(request.body)
         positions = data.get('positions', [])
         
         for pos in positions:
             signature_id = pos.get('id')
-            signature = Signature.objects.get(id=signature_id)
+            # 找到对应的SignaturePlacement记录进行更新
+            placement = get_object_or_404(SignaturePlacement, signature_id=signature_id, board=board)
             
             # 验证权限 - 允许管理员或创建该签名的用户更新位置
-            if request.user.is_staff or signature.user == request.user:
-                signature.position_x = pos.get('position_x', 0)
-                signature.position_y = pos.get('position_y', 0)
-                signature.rotation = pos.get('rotation', 0)
-                signature.scale = pos.get('scale', 1.0)
-                signature.z_index = pos.get('z_index', 1)
-                signature.save()
+            if request.user.is_staff or placement.signature.user == request.user:
+                placement.position_x = pos.get('position_x', 0)
+                placement.position_y = pos.get('position_y', 0)
+                placement.rotation = pos.get('rotation', 0)
+                placement.scale = pos.get('scale', 1.0)
+                placement.z_index = pos.get('z_index', 1)
+                placement.save()
         
         return JsonResponse({'success': True})
+    except SignatureBoard.DoesNotExist:
+        return JsonResponse({'success': False, 'error': '指定的签名墙不存在。'})
+    except SignaturePlacement.DoesNotExist:
+        return JsonResponse({'success': False, 'error': '尝试更新一个不在此墙上的签名。'})
     except Exception as e:
         return JsonResponse({'success': False, 'error': str(e)})
         
+@login_required
+@require_POST
 def toggle_signature_visibility(request, pk):
-    """切换签名在墙上的可见性"""
-    if not request.user.is_authenticated:
-        return JsonResponse({'success': False, 'error': '请先登录'})
-        
+    """切换签名在特定墙上的可见性"""
     try:
         data = json.loads(request.body)
-        visibility = data.get('is_public', True)
-        
-        signature = Signature.objects.get(pk=pk)
-        
-        # 权限检查 - 只有自己或管理员才能修改
-        if request.user.is_staff or signature.user == request.user:
-            signature.is_public = visibility
-            signature.save()
-            return JsonResponse({'success': True})
-        else:
-            return JsonResponse({'success': False, 'error': '您没有权限修改此签名'})
-    except Signature.DoesNotExist:
-        return JsonResponse({'success': False, 'error': '签名不存在'})
-    except Exception as e:
-        return JsonResponse({'success': False, 'error': str(e)})
+        board_id = data.get('board_id')
+        is_public = data.get('is_public') # 修正：使用 is_public
 
+        if board_id is None or is_public is None:
+            return JsonResponse({'success': False, 'error': '缺少 board_id 或 is_public 参数'}, status=400)
+
+        board = get_object_or_404(SignatureBoard, pk=board_id)
+        signature = get_object_or_404(Signature, pk=pk)
+
+        # 权限检查 - 只有自己或管理员才能修改
+        if not (request.user.is_staff or signature.user == request.user):
+            return JsonResponse({'success': False, 'error': '您没有权限修改此签名'}, status=403)
+
+        # 获取或创建placement
+        placement, created = SignaturePlacement.objects.get_or_create(
+            signature=signature,
+            board=board
+        )
+        
+        placement.is_public = is_public # 修正：使用 is_public
+        placement.save()
+        
+        action = "显示" if is_public else "隐藏"
+        return JsonResponse({'success': True, 'message': f'签名已成功在当前墙上{action}。'})
+
+    except Signature.DoesNotExist:
+        return JsonResponse({'success': False, 'error': '签名不存在'}, status=404)
+    except SignatureBoard.DoesNotExist:
+        return JsonResponse({'success': False, 'error': '签名墙不存在'}, status=404)
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)
+
+@login_required
 def get_my_signatures(request):
-    """获取当前用户的所有签名，用于侧边栏显示"""
+    """获取当前用户的所有签名，并标记它们在特定墙上的状态"""
     if not request.user.is_authenticated:
-        return JsonResponse({'success': False, 'error': '请先登录'})
-    
+        return JsonResponse({'success': False, 'error': '请先登录'}, status=401)
+
+    board_id = request.GET.get('board_id')
+    if not board_id:
+        return JsonResponse({'success': False, 'error': '缺少 board_id 参数'}, status=400)
+
     try:
-        # 获取所有签名，包括公开和非公开的
-        signatures = Signature.objects.filter(user=request.user).order_by('-created_at')
+        # 获取用户的所有签名
+        user_signatures = Signature.objects.filter(user=request.user).order_by('-created_at')
         
-        # 记录获取到的签名数量以便调试
-        signature_count = signatures.count()
-        print(f"【调试】为用户 {request.user.username} 获取到 {signature_count} 个签名")
+        # 获取当前墙上所有相关的placement记录
+        placements_on_board = SignaturePlacement.objects.filter(
+            board_id=board_id, 
+            signature__user=request.user
+        ).values('signature_id', 'is_public')
         
-        # 获取当前在签名墙上显示的签名ID列表
-        on_board_signatures = Signature.objects.filter(user=request.user, is_public=True).values_list('id', flat=True)
-        
-        # 准备签名数据
+        # 创建一个字典以便快速查找签名在当前板上的公开状态
+        board_signature_status = {p['signature_id']: p['is_public'] for p in placements_on_board}
+
         signatures_data = []
-        for signature in signatures:
-            try:
-                # 确保图片URL存在
-                image_url = signature.image.url if signature.image else None
-                
-                signatures_data.append({
-                    'id': signature.pk,
-                    'title': signature.title,
-                    'image_url': image_url,
-                    'is_public': signature.is_public,
-                    'on_board': signature.pk in on_board_signatures,
-                    'position_x': signature.position_x,
-                    'position_y': signature.position_y,
-                    'rotation': signature.rotation,
-                    'scale': signature.scale,
-                    'z_index': signature.z_index,
-                    'board_id': signature.board.pk if signature.board else None,
-                    'board_title': signature.board.title if signature.board else "默认签名墙"
-                })
-            except Exception as item_err:
-                # 处理单个签名的错误，但不中断整个过程
-                print(f"【警告】处理签名 ID:{signature.pk} 时出错: {str(item_err)}")
+        for signature in user_signatures:
+            image_url = signature.image.url if signature.image else None
+            # 检查签名是否存在于当前板的placement记录中
+            on_board = signature.pk in board_signature_status
+            # 获取其在当前板上的可见状态，如果不在板上则默认为False
+            is_public_on_board = board_signature_status.get(signature.pk, False)
+
+            signatures_data.append({
+                'id': signature.pk,
+                'title': signature.title,
+                'image_url': image_url,
+                'on_board': on_board, # 是否在当前墙上 (有placement记录)
+                'is_public': is_public_on_board, # 在当前墙上是否可见
+            })
         
-        # 返回成功结果
         return JsonResponse({
             'success': True, 
             'signatures': signatures_data,
-            'count': len(signatures_data)
         })
     except Exception as e:
-        # 记录详细错误信息以便调试
         import traceback
         print(f"【错误】获取签名时出现异常: {str(e)}")
         print(traceback.format_exc())
-        return JsonResponse({'success': False, 'error': str(e)})
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)

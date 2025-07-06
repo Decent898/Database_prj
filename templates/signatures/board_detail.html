@@ -507,33 +507,33 @@
         {% endif %}
         
         <div id="signature-board" class="mb-4">
-        {% for signature in signatures %}
+        {% for placement in placements %}
             <div class="signature-item" 
-                 id="signature-{{ signature.id }}"
-                 data-id="{{ signature.id }}"
-                 data-x="{{ signature.position_x }}"
-                 data-y="{{ signature.position_y }}"
-                 data-rotation="{{ signature.rotation }}"
-                 data-scale="{{ signature.scale }}"
-                 data-z-index="{{ signature.z_index }}"
-                 data-user-id="{{ signature.user.id }}"
-                 data-username="{{ signature.user.username }}"
-                 {% if user.id == signature.user.id or user.is_staff %}data-can-edit="true"{% endif %}
-                 style="transform: translate({{ signature.position_x }}px, {{ signature.position_y }}px) rotate({{ signature.rotation }}deg) scale({{ signature.scale }});
-                        z-index: {{ signature.z_index }};">
-                <img src="{{ signature.image.url }}" alt="{{ signature.title }}">
+                 id="signature-{{ placement.signature.id }}"
+                 data-id="{{ placement.signature.id }}"
+                 data-x="{{ placement.position_x }}"
+                 data-y="{{ placement.position_y }}"
+                 data-rotation="{{ placement.rotation }}"
+                 data-scale="{{ placement.scale }}"
+                 data-z-index="{{ placement.z_index }}"
+                 data-user-id="{{ placement.signature.user.id }}"
+                 data-username="{{ placement.signature.user.username }}"
+                 {% if user.id == placement.signature.user.id or user.is_staff %}data-can-edit="true"{% endif %}
+                 style="transform: translate({{ placement.position_x }}px, {{ placement.position_y }}px) rotate({{ placement.rotation }}deg) scale({{ placement.scale }});
+                        z-index: {{ placement.z_index }};">
+                <img src="{{ placement.signature.image.url }}" alt="{{ placement.signature.title }}">
                 
                 <!-- 悬停工具提示 -->
                 <div class="signature-tooltip">
-                    <strong>{{ signature.title }}</strong><br>
-                    作者: {{ signature.user.username }}
-                    {% if signature.description %}
-                    <br>{{ signature.description|truncatechars:50 }}
+                    <strong>{{ placement.signature.title }}</strong><br>
+                    作者: {{ placement.signature.user.username }}
+                    {% if placement.signature.description %}
+                    <br>{{ placement.signature.description|truncatechars:50 }}
                     {% endif %}
                 </div>
                 
                 {% if user.is_authenticated %}
-                    {% if user.id == signature.user.id or user.is_staff %}
+                    {% if user.id == placement.signature.user.id or user.is_staff %}
                     <!-- 移动按钮 - 右上角 -->
                     <div class="control-btn move-handle" title="移动">
                         <i class="fas fa-arrows-alt"></i>
