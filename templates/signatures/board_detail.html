@@ -1,0 +1,1339 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ board.title }} - 互动签名墙{% endblock %}
+
+{% block extra_css %}
+<style>
+    #signature-board {
+        position: relative;
+        width: 100%;
+        height: 600px;
+        background: linear-gradient(45deg, #6c5ce7 25%, #a29bfe 25%, #a29bfe 50%, #6c5ce7 50%, #6c5ce7 75%, #a29bfe 75%);
+        background-size: 50px 50px;
+        border: 10px solid #5649c0;
+        border-radius: 15px;
+        box-shadow: 0 15px 30px rgba(0, 0, 0, 0.3);
+        overflow: hidden;
+        transition: all 0.5s ease;
+    }
+    
+    .signature-item {
+        position: absolute;
+        cursor: grab;  /* 默认为抓取手势 */
+        user-select: none;
+        max-width: 200px;
+        background-color: white;
+        padding: 10px;
+        padding-bottom: 25px; /* 为底部文字留出空间 */
+        box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3);
+        transition: box-shadow 0.2s ease, transform 0.05s ease-out;
+        border-radius: 8px;
+        margin: 10px; /* 添加外边距防止卡片紧贴 */
+    }
+    
+    .signature-item:hover {
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    }
+    
+    .signature-item.dragging {
+        cursor: grabbing;  /* 拖拽时为抓取中手势 */
+        opacity: 0.95;
+        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+        z-index: 1000 !important;
+    }
+    
+    .signature-item img {
+        max-width: 100%;
+        border-radius: 6px;
+        margin-bottom: 8px;
+    }
+    
+    .signature-item.rotating {
+        transition: transform 0.05s ease;
+    }
+    
+    @keyframes saveSuccess {
+        0% { box-shadow: 0 0 0 2px rgba(40, 167, 69, 0.5); }
+        50% { box-shadow: 0 0 10px 5px rgba(40, 167, 69, 0.5); }
+        100% { box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3); }
+    }
+    
+    .signature-item.save-success {
+        animation: saveSuccess 1s ease-out;
+    }
+    
+    .signature-item.resetting {
+        transform: scale(0.8) !important;
+        opacity: 0.5 !important;
+        filter: blur(3px);
+    }
+    
+    .signature-item.resizing {
+        box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.5) !important;
+    }
+    
+    .signature-item.temp-draggable {
+        cursor: move !important;
+        box-shadow: 0 0 0 2px rgba(255, 193, 7, 0.6) !important;
+        z-index: 1000 !important;
+    }
+    
+    .signature-item .resize-handle:hover,
+    .signature-item .rotate-handle:hover,
+    .signature-item .move-handle:hover {
+        transform: scale(1.2);
+        opacity: 1;
+    }
+    
+    .control-btn {
+        position: absolute;
+        width: 24px;
+        height: 24px;
+        background: rgba(255, 255, 255, 0.9);
+        border-radius: 50%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        font-size: 12px;
+        color: #333;
+        cursor: pointer;
+        border: 1px solid rgba(0,0,0,0.1);
+        box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        transition: all 0.2s ease;
+        opacity: 0;
+        z-index: 100;
+    }
+    
+    .signature-item:hover .control-btn {
+        opacity: 0.8;
+    }
+    
+    .control-btn:hover {
+        opacity: 1 !important;
+        transform: scale(1.1);
+        box-shadow: 0 3px 7px rgba(0,0,0,0.3);
+    }
+    
+    /* 缩放按钮 - 左下角 */
+    .resize-handle {
+        bottom: -15px;
+        left: -15px;
+        background-color: #28a745;
+        cursor: nwse-resize;
+        z-index: 110; /* 确保按钮在顶层 */
+    }
+    
+    .resize-handle i {
+        color: white;
+        transform: rotate(-45deg);
+    }
+    
+    /* 旋转按钮 - 右下角 */
+    .rotate-handle {
+        bottom: -15px;
+        right: -15px;
+        background-color: #007bff;
+        cursor: grab;
+        z-index: 110; /* 确保按钮在顶层 */
+    }
+    
+    .rotate-handle:active {
+        cursor: grabbing;
+    }
+    
+    .rotate-handle i {
+        color: white;
+    }
+    
+    /* 移动按钮 - 右上角 */
+    .move-handle {
+        top: -15px;
+        right: -15px;
+        background-color: #ffc107;
+        cursor: move;
+        z-index: 110; /* 确保按钮在顶层 */
+    }
+    
+    .move-handle i {
+        color: #333;
+    }
+    
+    #board-controls {
+        margin-bottom: 20px;
+        padding: 10px;
+        background: #f8f9fa;
+        border-radius: 5px;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    }
+    
+    .toast-container {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        z-index: 9999;
+    }
+    
+    .toast {
+        background-color: rgba(0, 0, 0, 0.7);
+        color: white;
+        padding: 10px 15px;
+        border-radius: 4px;
+        margin-top: 10px;
+        opacity: 0;
+        transform: translateY(20px);
+        transition: opacity 0.3s ease, transform 0.3s ease;
+    }
+    
+    /* 右键菜单样式 */
+    .context-menu {
+        position: absolute;
+        z-index: 10000;
+        background: white;
+        border-radius: 5px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+        padding: 5px 0;
+        min-width: 150px;
+        display: none;
+    }
+    
+    .context-menu.show {
+        display: block;
+    }
+    
+    .context-menu-item {
+        padding: 8px 15px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        transition: background-color 0.2s;
+    }
+    
+    .context-menu-item:hover {
+        background-color: #f5f5f5;
+    }
+    
+    .context-menu-item i {
+        margin-right: 8px;
+        width: 16px;
+        text-align: center;
+    }
+    
+    .context-menu-separator {
+        height: 1px;
+        background-color: #e0e0e0;
+        margin: 5px 0;
+    }
+    
+    .context-menu-item.disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+    
+    .context-menu-item.disabled:hover {
+        background-color: inherit;
+    }
+    
+    /* 被隐藏的签名项 */
+    .signature-item.hidden {
+        display: none;
+    }
+    
+    /* 侧边签名菜单样式 */
+    #signatures-sidebar {
+        position: absolute;
+        right: 0;
+        top: 0;
+        width: 250px;
+        height: 100%;
+        background: rgba(255, 255, 255, 0.95);
+        border-left: 1px solid #ddd;
+        padding: 10px;
+        box-shadow: -2px 0 10px rgba(0, 0, 0, 0.1);
+        overflow-y: auto;
+        z-index: 100;
+        transition: transform 0.3s ease-in-out;
+    }
+    
+    .sidebar-closed {
+        transform: translateX(250px);
+    }
+    
+    #sidebar-toggle {
+        position: absolute;
+        top: 50%;
+        left: -30px;
+        width: 30px;
+        height: 80px;
+        background: #fff;
+        border: 1px solid #ddd;
+        border-right: none;
+        border-radius: 6px 0 0 6px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        box-shadow: -3px 0 8px rgba(0,0,0,0.15);
+        transform: translateY(-50%);
+        transition: all 0.2s ease;
+        z-index: 101;
+    }
+    
+    #sidebar-toggle:hover {
+        background-color: #f0f0f0;
+        left: -32px;
+        box-shadow: -4px 0 10px rgba(0,0,0,0.2);
+    }
+    
+    #sidebar-toggle i {
+        color: #007bff;
+        font-size: 16px;
+    }
+    
+    .my-signature-item {
+        position: relative;
+        margin-bottom: 10px;
+        padding: 5px;
+        background: #f8f8f8;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        cursor: grab;
+        transition: all 0.2s ease;
+    }
+    
+    .my-signature-item:hover {
+        background: #f0f0f0;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+    
+    .my-signature-item img {
+        max-width: 100%;
+        height: auto;
+        border-radius: 3px;
+    }
+    
+    .my-signature-title {
+        font-size: 12px;
+        margin-top: 5px;
+        text-align: center;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    
+    .sidebar-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 10px;
+        padding-bottom: 5px;
+        border-bottom: 1px solid #ddd;
+    }
+    
+    .sidebar-header h5 {
+        margin: 0;
+        font-size: 16px;
+    }
+    
+    .signature-board-container {
+        position: relative;
+    }
+    
+    .signature-visibility {
+        display: flex;
+        align-items: center;
+        margin-top: 5px;
+        font-size: 12px;
+    }
+    
+    .signature-visibility i {
+        margin-right: 5px;
+        color: #28a745;
+    }
+    
+    .signature-visibility.hidden i {
+        color: #dc3545;
+    }
+    
+    .signature-item.dragging-from-sidebar {
+        opacity: 0.8;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+    }
+    
+    .sidebar-actions {
+        display: flex;
+        justify-content: center;
+        margin-top: 5px;
+    }
+    
+    .sidebar-action-btn {
+        background: none;
+        border: none;
+        font-size: 12px;
+        color: #007bff;
+        cursor: pointer;
+        padding: 2px 5px;
+    }
+    
+    .sidebar-action-btn:hover {
+        text-decoration: underline;
+    }
+    
+    .my-signature-item.on-board {
+        background: #e8f4ff;
+        border-color: #b8daff;
+    }
+    
+    .my-signature-item.hidden-item {
+        background: #f8d7da;
+        border-color: #f5c6cb;
+        opacity: 0.7;
+    }
+    
+    /* 签名拖动时的占位符 */
+    .signature-placeholder {
+        border: 2px dashed #999;
+        background-color: rgba(0, 0, 0, 0.05);
+    }
+    
+    /* 自定义签名墙的特定样式 */
+    .board-title {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 20px;
+    }
+    
+    .board-title h1 {
+        margin: 0;
+        font-size: 2rem;
+        color: #5649c0;
+    }
+    
+    .signature-tooltip {
+        position: absolute;
+        background-color: rgba(255, 255, 255, 0.95);
+        padding: 8px;
+        border-radius: 4px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+        font-size: 12px;
+        max-width: 200px;
+        bottom: -5px;
+        left: 0;
+        right: 0;
+        margin: auto;
+        text-align: center;
+        z-index: 50;
+        display: none;
+    }
+    
+    .signature-item:hover .signature-tooltip {
+        display: block;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="board-title mb-4">
+        <h1>{{ board.title }}</h1>
+        <div>
+            <a href="{% url 'signature_board_list' %}" class="btn btn-outline-secondary btn-sm">
+                <i class="fas fa-arrow-left"></i> 返回列表
+            </a>
+            {% if user.is_authenticated %}
+            <a href="{% url 'create_board_signature' board.pk %}" class="btn btn-primary btn-sm">
+                <i class="fas fa-plus"></i> 添加签名
+            </a>
+            {% endif %}
+            {% if user == board.created_by or user.is_staff %}
+            <a href="{% url 'update_signature_board' board.pk %}" class="btn btn-outline-primary btn-sm">
+                <i class="fas fa-edit"></i> 编辑
+            </a>
+            {% endif %}
+        </div>
+    </div>
+    
+    {% if board.description %}
+    <div class="alert alert-info">
+        {{ board.description }}
+    </div>
+    {% endif %}
+    
+    <!-- Toast提示容器 -->
+    <div class="toast-container"></div>
+
+    <!-- 签名墙右键菜单 -->
+    <div id="signature-context-menu" class="context-menu">
+        <div class="context-menu-item edit-only" id="bring-to-front">
+            <i class="fas fa-level-up-alt"></i> 置于顶层
+        </div>
+        <div class="context-menu-item edit-only" id="send-to-back">
+            <i class="fas fa-level-down-alt"></i> 置于底层
+        </div>
+        <div class="context-menu-separator"></div>
+        <div class="context-menu-item" id="view-signature">
+            <i class="fas fa-eye"></i> 查看详情
+        </div>
+        <div class="context-menu-separator"></div>
+        <div class="context-menu-item" id="hide-signature">
+            <i class="fas fa-eye-slash"></i> 从墙上隐藏
+        </div>
+    </div>
+    
+    <div class="signature-board-container">
+        <!-- 侧边栏：用户签名列表 -->
+        {% if user.is_authenticated %}
+        <div id="signatures-sidebar" class="sidebar-closed">
+            <div id="sidebar-toggle">
+                <i class="fas fa-chevron-left"></i>
+            </div>
+            <div class="sidebar-header">
+                <h5>我的签名</h5>
+                <a href="{% url 'create_signature' %}" class="btn btn-sm btn-primary">
+                    <i class="fas fa-plus"></i>
+                </a>
+            </div>
+            <div id="my-signatures-container">
+                <!-- 这里将通过AJAX加载用户的签名 -->
+                <div class="text-center py-3">
+                    <div class="spinner-border spinner-border-sm" role="status">
+                        <span class="visually-hidden">加载中...</span>
+                    </div>
+                    <p class="mt-2">加载我的签名...</p>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+        
+        <div id="signature-board" class="mb-4">
+        {% for signature in signatures %}
+            <div class="signature-item" 
+                 id="signature-{{ signature.id }}"
+                 data-id="{{ signature.id }}"
+                 data-x="{{ signature.position_x }}"
+                 data-y="{{ signature.position_y }}"
+                 data-rotation="{{ signature.rotation }}"
+                 data-scale="{{ signature.scale }}"
+                 data-z-index="{{ signature.z_index }}"
+                 data-user-id="{{ signature.user.id }}"
+                 data-username="{{ signature.user.username }}"
+                 {% if user.id == signature.user.id or user.is_staff %}data-can-edit="true"{% endif %}
+                 style="transform: translate({{ signature.position_x }}px, {{ signature.position_y }}px) rotate({{ signature.rotation }}deg) scale({{ signature.scale }});
+                        z-index: {{ signature.z_index }};">
+                <img src="{{ signature.image.url }}" alt="{{ signature.title }}">
+                
+                <!-- 悬停工具提示 -->
+                <div class="signature-tooltip">
+                    <strong>{{ signature.title }}</strong><br>
+                    作者: {{ signature.user.username }}
+                    {% if signature.description %}
+                    <br>{{ signature.description|truncatechars:50 }}
+                    {% endif %}
+                </div>
+                
+                {% if user.is_authenticated %}
+                    {% if user.id == signature.user.id or user.is_staff %}
+                    <!-- 移动按钮 - 右上角 -->
+                    <div class="control-btn move-handle" title="移动">
+                        <i class="fas fa-arrows-alt"></i>
+                    </div>
+                    
+                    <!-- 缩放按钮 - 左下角 -->
+                    <div class="control-btn resize-handle" title="调整大小">
+                        <i class="fas fa-expand-arrows-alt"></i>
+                    </div>
+                    
+                    <!-- 旋转按钮 - 右下角 -->
+                    <div class="control-btn rotate-handle" title="旋转">
+                        <i class="fas fa-sync-alt"></i>
+                    </div>
+                    {% endif %}
+                {% endif %}
+            </div>
+        {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/interactjs@1.10.17/dist/interact.min.js"></script>
+<script>
+    // 当前选中的签名项
+    let currentSignature = null;
+    
+    document.addEventListener('DOMContentLoaded', function() {
+        // 侧边栏相关初始化
+        initSidebar();
+        // 初始化时添加随机的轻微抖动效果，让签名看起来更自然
+        const signatureItems = document.querySelectorAll('.signature-item');
+        
+        // 确保在页面加载时正确应用所有数据属性
+        signatureItems.forEach(item => {
+            // 从数据属性中获取位置、旋转和缩放信息
+            const x = parseFloat(item.getAttribute('data-x')) || 0;
+            const y = parseFloat(item.getAttribute('data-y')) || 0;
+            const rotation = parseInt(item.getAttribute('data-rotation')) || 0;
+            const scale = parseFloat(item.getAttribute('data-scale')) || 1.0;
+            const zIndex = parseInt(item.getAttribute('data-z-index')) || 1;
+            
+            // 确保所有位置属性都被正确应用
+            item.style.zIndex = zIndex;
+            
+            setTimeout(() => {
+                // 给每个签名添加一个小动画，让它们看起来"落"到签名墙上
+                item.style.transition = 'transform 0.3s ease-out';
+                
+                // 先向上移动一点点，但保持旋转角度和缩放
+                item.style.transform = `translate(${x}px, ${y - 10}px) rotate(${rotation}deg) scale(${scale})`;
+                
+                // 然后"掉"回原位
+                setTimeout(() => {
+                    item.style.transform = `translate(${x}px, ${y}px) rotate(${rotation}deg) scale(${scale})`;
+                    
+                    // 动画完成后移除transition
+                    setTimeout(() => {
+                        item.style.removeProperty('transition');
+                    }, 300);
+                }, 50);
+            }, Math.random() * 500); // 每个签名的动画随机延迟启动
+        });
+        
+        // 拖拽功能 - 现在只对移动按钮生效
+        interact('.move-handle').draggable({
+            inertia: false,
+            modifiers: [
+                interact.modifiers.restrictRect({
+                    restriction: '#signature-board',
+                    endOnly: true
+                })
+            ],
+            autoScroll: true,
+            
+            // 存储鼠标在元素内部的点击位置偏移
+            onstart: function(event) {
+                // 获取父元素（签名卡片）
+                const target = event.target.closest('.signature-item');
+                if (!target) return;
+                
+                // 检查权限
+                const canEdit = target.getAttribute('data-can-edit') === 'true';
+                if (!canEdit) {
+                    showToast('您没有编辑这个签名的权限');
+                    return;
+                }
+                
+                const rect = target.getBoundingClientRect();
+                
+                // 添加"正在拖拽"状态类
+                target.classList.add('dragging');
+                
+                // 计算鼠标点击位置相对于元素左上角的偏移
+                const offsetX = event.clientX - rect.left;
+                const offsetY = event.clientY - rect.top;
+                
+                // 保存偏移值到元素的data属性
+                target.setAttribute('data-offset-x', offsetX);
+                target.setAttribute('data-offset-y', offsetY);
+                
+                // 显示用户正在拖拽的视觉反馈
+                target.style.boxShadow = '0 5px 15px rgba(0,0,0,0.3)';
+                target.style.zIndex = '1000';
+                
+                // 移动按钮高亮
+                event.target.style.opacity = '1';
+                event.target.style.transform = 'scale(1.2)';
+            },
+            
+            onmove: function(event) {
+                // 获取签名卡片
+                const target = event.target.closest('.signature-item');
+                if (!target) return;
+                
+                dragMoveListener(event, target);
+            },
+            
+            onend: function (event) {
+                // 获取签名卡片
+                const target = event.target.closest('.signature-item');
+                if (!target) return;
+                
+                const x = parseFloat(target.getAttribute('data-x')) || 0;
+                const y = parseFloat(target.getAttribute('data-y')) || 0;
+                
+                // 移除"正在拖拽"状态类
+                target.classList.remove('dragging');
+                
+                // 恢复正常阴影和z-index
+                target.style.boxShadow = '2px 2px 5px rgba(0, 0, 0, 0.3)';
+                target.style.zIndex = target.getAttribute('data-z-index') || '1';
+                
+                // 将最终位置存储到元素的data属性中
+                target.setAttribute('data-x', x);
+                target.setAttribute('data-y', y);
+                
+                // 拖拽结束后，通过小动画显示位置已固定
+                target.style.transition = 'transform 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
+                
+                // 先"弹"一下，然后回到原位
+                const currentTransform = target.style.transform;
+                target.style.transform = currentTransform + ' scale(1.05)';
+                
+                setTimeout(() => {
+                    target.style.transform = currentTransform;
+                    setTimeout(() => {
+                        target.style.transition = '';
+                    }, 150);
+                }, 50);
+                
+                // 恢复移动按钮样式
+                event.target.style.opacity = '';
+                event.target.style.transform = '';
+                
+                // 显示提示信息
+                showToast('签名已固定在新位置');
+                
+                // 保存签名位置到服务器
+                saveSignaturePosition(target);
+            }
+        })
+        
+        // 允许整个签名区域的双击移动
+        interact('.signature-item')
+            .on('doubletap', function(event) {
+                // 只有在双击签名本身而不是控制按钮时才启用拖动模式
+                if (!event.target.closest('.control-btn')) {
+                    const target = event.currentTarget;
+                    
+                    // 检查权限
+                    const canEdit = target.getAttribute('data-can-edit') === 'true';
+                    if (!canEdit) {
+                        showToast('您没有编辑这个签名的权限');
+                        return;
+                    }
+                    
+                    target.classList.add('temp-draggable');
+                    showToast('签名临时可拖动模式已启用');
+                    
+                    // 临时启用拖动模式
+                    interact(target).draggable({
+                        onmove: function(moveEvent) {
+                            dragMoveListener(moveEvent, target);
+                        },
+                        onend: function() {
+                            target.classList.remove('temp-draggable');
+                            interact(target).draggable(false);
+                            showToast('签名已固定');
+                            
+                            // 保存位置
+                            saveSignaturePosition(target);
+                        }
+                    });
+                }
+            });
+            
+        // 缩放按钮功能
+        interact('.resize-handle').draggable({
+            onstart: function(event) {
+                // 获取签名卡片
+                const target = event.target.closest('.signature-item');
+                if (!target) return;
+                
+                // 检查权限
+                const canEdit = target.getAttribute('data-can-edit') === 'true';
+                if (!canEdit) {
+                    showToast('您没有编辑这个签名的权限');
+                    return;
+                }
+                
+                // 高亮缩放按钮
+                event.target.style.opacity = '1';
+                event.target.style.transform = 'scale(1.2)';
+                event.target.style.boxShadow = '0 0 8px rgba(40, 167, 69, 0.8)';
+                
+                // 添加缩放时的视觉效果
+                target.classList.add('resizing');
+                
+                // 记录初始尺寸和缩放比例
+                const rect = target.getBoundingClientRect();
+                target.setAttribute('data-initial-width', rect.width);
+                target.setAttribute('data-initial-height', rect.height);
+                target.setAttribute('data-start-scale', target.getAttribute('data-scale') || 1.0);
+                
+                // 清除上一次的起始位置记录
+                target.removeAttribute('data-start-x');
+                target.removeAttribute('data-start-y');
+                
+                // 显示缩放开始提示
+                showToast('拖动调整大小：向右上拖动放大，向左下拖动缩小', 1500);
+            },
+            
+            onmove: function(event) {
+                const target = event.target.closest('.signature-item');
+                if (!target) return;
+                
+                // 获取初始值和当前鼠标位置
+                const initialWidth = parseFloat(target.getAttribute('data-initial-width'));
+                const initialHeight = parseFloat(target.getAttribute('data-initial-height'));
+                const startScale = parseFloat(target.getAttribute('data-start-scale')) || 1.0;
+                
+                // 获取起始点和当前鼠标位置
+                const startX = parseFloat(target.getAttribute('data-start-x') || 0);
+                const startY = parseFloat(target.getAttribute('data-start-y') || 0);
+                
+                if (!target.hasAttribute('data-start-x')) {
+                    // 首次移动，记录起始位置
+                    target.setAttribute('data-start-x', event.clientX);
+                    target.setAttribute('data-start-y', event.clientY);
+                    return; // 第一次移动仅记录位置
+                }
+                
+                // 计算鼠标移动的距离（向左下是缩小，向右上是放大）
+                const dx = event.clientX - startX;
+                const dy = event.clientY - startY;
+                
+                // 鼠标移动的总距离，左下为负，右上为正
+                const distanceMoved = -dx - dy; // 反转方向，使向右上为放大
+                
+                // 计算缩放因子：每移动100像素变化50%大小
+                const sensitivityFactor = 0.5; // 灵敏度调节因子
+                const scalingAmount = distanceMoved * sensitivityFactor / 100;
+                
+                // 应用缩放倍数
+                let newScale = startScale * (1 + scalingAmount);
+                
+                // 限制最小和最大缩放比例
+                newScale = Math.max(0.5, Math.min(newScale, 3.0));
+                
+                // 保持当前的位置和旋转角度
+                const x = parseFloat(target.getAttribute('data-x')) || 0;
+                const y = parseFloat(target.getAttribute('data-y')) || 0;
+                const rotation = parseFloat(target.getAttribute('data-rotation')) || 0;
+                
+                // 更新元素的样式
+                target.style.transform = `translate(${x}px, ${y}px) rotate(${rotation}deg) scale(${newScale})`;
+                target.setAttribute('data-scale', newScale);
+                
+                // 显示当前缩放比例的提示
+                const scalePercentage = Math.round(newScale * 100);
+                showToast(`缩放比例: ${scalePercentage}%`, 500);
+            },
+            
+            onend: function(event) {
+                const target = event.target.closest('.signature-item');
+                if (!target) return;
+                
+                // 恢复缩放按钮样式
+                event.target.style.opacity = '';
+                event.target.style.transform = '';
+                event.target.style.boxShadow = '';
+                
+                // 移除缩放时的视觉效果
+                target.classList.remove('resizing');
+                
+                // 缩放完成后的动画效果
+                target.style.transition = 'box-shadow 0.3s ease';
+                target.style.boxShadow = '0 0 10px rgba(40, 167, 69, 0.7)';
+                
+                setTimeout(() => {
+                    target.style.boxShadow = '2px 2px 5px rgba(0, 0, 0, 0.3)';
+                    setTimeout(() => {
+                        target.style.transition = '';
+                    }, 300);
+                }, 300);
+                
+                // 显示调整完成的提示
+                const scale = parseFloat(target.getAttribute('data-scale')) || 1.0;
+                const scalePercentage = Math.round(scale * 100);
+                showToast(`签名大小已调整为 ${scalePercentage}%`);
+                
+                // 清除所有临时数据属性
+                target.removeAttribute('data-initial-width');
+                target.removeAttribute('data-initial-height');
+                target.removeAttribute('data-start-scale');
+                target.removeAttribute('data-start-x');
+                target.removeAttribute('data-start-y');
+                
+                // 保存到服务器
+                saveSignaturePosition(target);
+            }
+        });
+        
+        // 旋转功能
+        interact('.rotate-handle').draggable({
+            onstart: function(event) {
+                const signatureItem = event.target.closest('.signature-item');
+                if (!signatureItem) return;
+                
+                // 检查权限
+                const canEdit = signatureItem.getAttribute('data-can-edit') === 'true';
+                if (!canEdit) {
+                    showToast('您没有编辑这个签名的权限');
+                    return;
+                }
+                
+                // 高亮旋转按钮
+                event.target.style.opacity = '1';
+                event.target.style.transform = 'scale(1.2)';
+                event.target.style.boxShadow = '0 0 8px rgba(0, 123, 255, 0.8)';
+                
+                // 获取签名的中心点
+                const rect = signatureItem.getBoundingClientRect();
+                const centerX = rect.left + rect.width / 2;
+                const centerY = rect.top + rect.height / 2;
+                
+                // 保存中心点到元素的data属性
+                signatureItem.setAttribute('data-center-x', centerX);
+                signatureItem.setAttribute('data-center-y', centerY);
+                
+                // 计算初始角度
+                const initialAngle = Math.atan2(event.clientY - centerY, event.clientX - centerX);
+                signatureItem.setAttribute('data-initial-angle', initialAngle);
+                
+                // 获取当前的旋转角度
+                const currentRotation = parseFloat(signatureItem.getAttribute('data-rotation')) || 0;
+                signatureItem.setAttribute('data-start-rotation', currentRotation);
+                
+                signatureItem.classList.add('rotating');
+            },
+            onmove: function(event) {
+                const signatureItem = event.target.closest('.signature-item');
+                if (!signatureItem) return;
+                
+                // 获取中心点和初始角度
+                const centerX = parseFloat(signatureItem.getAttribute('data-center-x'));
+                const centerY = parseFloat(signatureItem.getAttribute('data-center-y'));
+                const initialAngle = parseFloat(signatureItem.getAttribute('data-initial-angle'));
+                const startRotation = parseFloat(signatureItem.getAttribute('data-start-rotation'));
+                
+                // 计算当前角度
+                const currentAngle = Math.atan2(event.clientY - centerY, event.clientX - centerX);
+                
+                // 计算角度差（弧度）
+                const angleDiff = currentAngle - initialAngle;
+                
+                // 将弧度转换为角度
+                const rotationDiff = angleDiff * (180 / Math.PI);
+                
+                // 计算新的旋转角度
+                const newRotation = startRotation + rotationDiff;
+                
+                // 获取当前位置和缩放
+                const x = parseFloat(signatureItem.getAttribute('data-x')) || 0;
+                const y = parseFloat(signatureItem.getAttribute('data-y')) || 0;
+                const scale = parseFloat(signatureItem.getAttribute('data-scale')) || 1.0;
+                
+                // 应用新的旋转
+                signatureItem.style.transform = `translate(${x}px, ${y}px) rotate(${newRotation}deg) scale(${scale})`;
+                signatureItem.setAttribute('data-rotation', newRotation);
+            },
+            onend: function(event) {
+                // 恢复旋转按钮样式
+                event.target.style.opacity = '';
+                event.target.style.transform = '';
+                event.target.style.boxShadow = '';
+                
+                const signatureItem = event.target.closest('.signature-item');
+                if (signatureItem) {
+                    signatureItem.classList.remove('rotating');
+                    
+                    // 获取旋转角度并显示提示
+                    const rotation = parseFloat(signatureItem.getAttribute('data-rotation')) || 0;
+                    const degrees = Math.round(rotation);
+                    showToast(`签名已旋转至 ${degrees}°`);
+                    
+                    // 保存到服务器
+                    saveSignaturePosition(signatureItem);
+                }
+            }
+        });
+        
+        // 初始化右键菜单
+        initContextMenu();
+        
+        // 加载我的签名（如果用户已登录）
+        if (document.getElementById('my-signatures-container')) {
+            loadMySignatures();
+        }
+    });
+    
+    // 实现拖拽移动的监听器
+    function dragMoveListener(event, target) {
+        // 获取当前位置
+        const x = parseFloat(target.getAttribute('data-x')) || 0;
+        const y = parseFloat(target.getAttribute('data-y')) || 0;
+        
+        // 计算新位置
+        const newX = x + event.dx;
+        const newY = y + event.dy;
+        
+        // 获取当前旋转和缩放
+        const rotation = parseFloat(target.getAttribute('data-rotation')) || 0;
+        const scale = parseFloat(target.getAttribute('data-scale')) || 1.0;
+        
+        // 获取签名板的位置
+        const board = document.getElementById('signature-board');
+        const boardRect = board.getBoundingClientRect();
+        
+        // 获取签名项的尺寸
+        const rect = target.getBoundingClientRect();
+        
+        // 计算边界约束 - 确保签名完全在签名板内
+        const margin = 5; // 边界安全边距
+        const finalX = Math.max(margin, Math.min(newX, boardRect.width - rect.width/scale - margin));
+        const finalY = Math.max(margin, Math.min(newY, boardRect.height - rect.height/scale - margin));
+        
+        // 更新元素的transform
+        target.style.transform = `translate(${finalX}px, ${finalY}px) rotate(${rotation}deg) scale(${scale})`;
+        
+        // 保存新位置到元素的data属性
+        target.setAttribute('data-x', finalX);
+        target.setAttribute('data-y', finalY);
+    }
+    
+    // 保存签名位置到服务器
+    function saveSignaturePosition(signature) {
+        const id = signature.getAttribute('data-id');
+        const x = parseFloat(signature.getAttribute('data-x')) || 0;
+        const y = parseFloat(signature.getAttribute('data-y')) || 0;
+        const rotation = parseFloat(signature.getAttribute('data-rotation')) || 0;
+        const scale = parseFloat(signature.getAttribute('data-scale')) || 1.0;
+        const zIndex = parseInt(signature.style.zIndex) || parseInt(signature.getAttribute('data-z-index')) || 1;
+        
+        const position = {
+            id: id,
+            position_x: x,
+            position_y: y,
+            rotation: rotation,
+            scale: scale,
+            z_index: zIndex
+        };
+        
+        // 发送AJAX请求保存位置
+        fetch('{% url "save_board_positions" board.pk %}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token }}'
+            },
+            body: JSON.stringify({ positions: [position] })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (!data.success) {
+                console.error('保存签名位置失败:', data.error);
+                showToast('保存位置失败: ' + data.error, 'error');
+            }
+        })
+        .catch(error => {
+            console.error('保存签名位置请求失败:', error);
+        });
+    }
+    
+    // 初始化右键菜单
+    function initContextMenu() {
+        const contextMenu = document.getElementById('signature-context-menu');
+        if (!contextMenu) return;
+        
+        // 确保初始状态为隐藏
+        contextMenu.style.display = 'none';
+        
+        // 防止菜单自身的右键点击
+        contextMenu.addEventListener('contextmenu', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        });
+        
+        // 签名项右键菜单
+        document.querySelectorAll('.signature-item').forEach(item => {
+            item.addEventListener('contextmenu', function(e) {
+                e.preventDefault();
+                
+                // 设置当前选中的签名
+                currentSignature = item;
+                
+                // 设置菜单位置
+                contextMenu.style.left = e.pageX + 'px';
+                contextMenu.style.top = e.pageY + 'px';
+                
+                // 根据签名所有者显示/隐藏相应的菜单项
+                const canEdit = item.getAttribute('data-can-edit') === 'true';
+                
+                // 显示/隐藏编辑选项
+                document.querySelectorAll('.edit-only').forEach(el => {
+                    el.style.display = canEdit ? 'flex' : 'none';
+                });
+                
+                // 显示菜单
+                contextMenu.style.display = 'block';
+                
+                // 添加点击外部关闭菜单
+                setTimeout(() => {
+                    document.addEventListener('click', closeContextMenu);
+                }, 0);
+            });
+        });
+        
+        // 绑定菜单项事件
+        bindContextMenuEvents();
+    }
+    
+    // 关闭右键菜单
+    function closeContextMenu(e) {
+        const contextMenu = document.getElementById('signature-context-menu');
+        if (!contextMenu) return;
+        
+        // 如果点击的不是菜单内的元素，则关闭菜单
+        if (!contextMenu.contains(e.target)) {
+            contextMenu.style.display = 'none';
+            document.removeEventListener('click', closeContextMenu);
+        }
+    }
+    
+    // 绑定右键菜单事件
+    function bindContextMenuEvents() {
+        // 置于顶层
+        const bringToFrontBtn = document.getElementById('bring-to-front');
+        if (bringToFrontBtn) {
+            bringToFrontBtn.addEventListener('click', function() {
+                if (!currentSignature) return;
+                
+                // 获取所有签名，找出最高的z-index
+                const signatures = document.querySelectorAll('.signature-item');
+                let maxZIndex = 1;
+                
+                signatures.forEach(sig => {
+                    const zIndex = parseInt(sig.style.zIndex || sig.getAttribute('data-z-index') || 1);
+                    if (zIndex > maxZIndex) maxZIndex = zIndex;
+                });
+                
+                // 设置当前签名的z-index为最高值+1
+                const newZIndex = maxZIndex + 1;
+                currentSignature.style.zIndex = newZIndex;
+                currentSignature.setAttribute('data-z-index', newZIndex);
+                
+                // 保存位置
+                saveSignaturePosition(currentSignature);
+                
+                // 显示成功提示
+                showToast('签名已置于顶层');
+            });
+        }
+        
+        // 置于底层
+        const sendToBackBtn = document.getElementById('send-to-back');
+        if (sendToBackBtn) {
+            sendToBackBtn.addEventListener('click', function() {
+                if (!currentSignature) return;
+                
+                // 设置当前签名的z-index为0
+                currentSignature.style.zIndex = 0;
+                currentSignature.setAttribute('data-z-index', 0);
+                
+                // 保存位置
+                saveSignaturePosition(currentSignature);
+                
+                // 显示成功提示
+                showToast('签名已置于底层');
+            });
+        }
+        
+        // 查看详情
+        const viewSignatureBtn = document.getElementById('view-signature');
+        if (viewSignatureBtn) {
+            viewSignatureBtn.addEventListener('click', function() {
+                if (!currentSignature) return;
+                
+                const id = currentSignature.getAttribute('data-id');
+                window.location.href = `/signatures/${id}/`;
+            });
+        }
+        
+        // 从墙上隐藏
+        const hideSignatureBtn = document.getElementById('hide-signature');
+        if (hideSignatureBtn) {
+            hideSignatureBtn.addEventListener('click', function() {
+                if (!currentSignature) return;
+                
+                const id = currentSignature.getAttribute('data-id');
+                const canEdit = currentSignature.getAttribute('data-can-edit') === 'true';
+                
+                if (!canEdit) {
+                    showToast('您没有权限隐藏这个签名', 'error');
+                    return;
+                }
+                
+                // 发送请求切换可见性
+                fetch(`/signatures/${id}/toggle-visibility/`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': '{{ csrf_token }}'
+                    },
+                    body: JSON.stringify({ is_public: false })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // 成功隐藏，移除签名元素
+                        currentSignature.style.opacity = 0;
+                        currentSignature.style.transform = 'scale(0.5)';
+                        
+                        setTimeout(() => {
+                            currentSignature.remove();
+                            showToast('签名已从墙上隐藏');
+                        }, 300);
+                    } else {
+                        showToast('隐藏签名失败: ' + data.error, 'error');
+                    }
+                })
+                .catch(error => {
+                    showToast('请求失败: ' + error, 'error');
+                });
+            });
+        }
+    }
+    
+    // 初始化侧边栏
+    function initSidebar() {
+        const sidebar = document.getElementById('signatures-sidebar');
+        const toggle = document.getElementById('sidebar-toggle');
+        
+        if (!sidebar || !toggle) return; // 如果用户未登录，可能没有侧边栏
+        
+        // 处理侧边栏切换
+        toggle.addEventListener('click', function() {
+            sidebar.classList.toggle('sidebar-closed');
+            
+            // 切换图标
+            const icon = this.querySelector('i');
+            if (sidebar.classList.contains('sidebar-closed')) {
+                icon.className = 'fas fa-chevron-left';
+            } else {
+                icon.className = 'fas fa-chevron-right';
+            }
+        });
+    }
+    
+    // 加载我的签名
+    function loadMySignatures() {
+        const container = document.getElementById('my-signatures-container');
+        if (!container) return;
+        
+        fetch("{% url 'api_my_signatures' %}")
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                container.innerHTML = '';
+                
+                if (data.signatures.length === 0) {
+                    container.innerHTML = '<p class="text-center">您还没有上传签名</p>';
+                    return;
+                }
+                
+                // 创建签名列表
+                data.signatures.forEach(signature => {
+                    const item = document.createElement('div');
+                    item.className = 'my-signature-item';
+                    item.setAttribute('data-id', signature.id);
+                    
+                    // 检查该签名是否已在当前板上
+                    const isOnBoard = document.querySelector(`.signature-item[data-id="${signature.id}"]`) !== null;
+                    if (isOnBoard) {
+                        item.classList.add('on-board');
+                    }
+                    
+                    // 创建签名图片
+                    const img = document.createElement('img');
+                    img.src = signature.image_url;
+                    img.alt = signature.title;
+                    
+                    // 创建签名标题
+                    const title = document.createElement('div');
+                    title.className = 'my-signature-title';
+                    title.textContent = signature.title;
+                    
+                    item.appendChild(img);
+                    item.appendChild(title);
+                    
+                    // 添加拖拽功能
+                    item.addEventListener('mousedown', function() {
+                        if (!isOnBoard) {
+                            // 如果签名不在墙上，添加到墙上
+                            addSignatureToBoard(signature.id, board.pk);
+                        }
+                    });
+                    
+                    container.appendChild(item);
+                });
+            } else {
+                container.innerHTML = '<p class="text-center text-danger">加载失败</p>';
+            }
+        })
+        .catch(error => {
+            console.error('加载我的签名失败:', error);
+            container.innerHTML = '<p class="text-center text-danger">网络错误</p>';
+        });
+    }
+    
+    // 添加签名到墙上
+    function addSignatureToBoard(signatureId, boardId) {
+        fetch(`/signatures/${signatureId}/add-to-board/${boardId}/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token }}'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // 刷新页面显示新添加的签名
+                location.reload();
+            } else {
+                showToast('添加失败: ' + data.error);
+            }
+        })
+        .catch(error => {
+            showToast('网络错误: ' + error);
+        });
+    }
+    
+    // Toast消息提示函数
+    function showToast(message, duration = 2000) {
+        // 确保有toast容器
+        let toastContainer = document.querySelector('.toast-container');
+        if (!toastContainer) {
+            toastContainer = document.createElement('div');
+            toastContainer.className = 'toast-container';
+            document.body.appendChild(toastContainer);
+        }
+        
+        // 创建toast元素
+        const toast = document.createElement('div');
+        toast.className = 'toast';
+        toast.textContent = message;
+        
+        // 添加到容器
+        toastContainer.appendChild(toast);
+        
+        // 显示动画
+        setTimeout(() => {
+            toast.style.opacity = '1';
+            toast.style.transform = 'translateY(0)';
+        }, 10);
+        
+        // 自动隐藏
+        setTimeout(() => {
+            toast.style.opacity = '0';
+            toast.style.transform = 'translateY(20px)';
+            
+            // 动画完成后移除元素
+            setTimeout(() => {
+                toast.remove();
+            }, 300);
+        }, duration);
+    }
+</script>
+{% endblock %}

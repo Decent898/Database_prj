@@ -402,11 +402,17 @@
 {% block content %}
 <div class="container mt-4">
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2>互动签名墙</h2>
+        <h2>互动签名墙 {% if board %}- {{ board.title }}{% endif %}</h2>
         {% if user.is_authenticated %}
-        <a href="{% url 'create_signature' %}" class="btn btn-primary">
-            <i class="fas fa-plus"></i> 上传新签名
-        </a>
+            {% if board %}
+                <a href="{% url 'create_board_signature' board_id=board.pk %}" class="btn btn-primary">
+                    <i class="fas fa-plus"></i> 在此墙上传签名
+                </a>
+            {% else %}
+                <a href="{% url 'create_signature' %}" class="btn btn-primary">
+                    <i class="fas fa-plus"></i> 上传新签名
+                </a>
+            {% endif %}
         {% endif %}
     </div>
     
@@ -1240,8 +1246,15 @@
             });
         });
         
+        // 动态生成保存URL
+        const saveUrl = {% if board %}
+            `{% url 'save_board_positions' board_id=board.pk %}`
+        {% else %}
+            `{% url 'save_signature_positions' %}`
+        {% endif %};
+
         // 发送到后端保存
-        fetch("{% url 'save_signature_positions' %}", {
+        fetch(saveUrl, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',

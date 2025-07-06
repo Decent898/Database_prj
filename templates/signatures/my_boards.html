@@ -1,0 +1,66 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}我的签名墙{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>我的签名墙</h1>
+        <a href="{% url 'create_signature_board' %}" class="btn btn-primary">
+            <i class="fas fa-plus"></i> 创建新签名墙
+        </a>
+    </div>
+    
+    <div class="row">
+        {% for board in boards %}
+        <div class="col-md-4 mb-4">
+            <div class="card h-100 shadow-sm">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">{{ board.title }}</h5>
+                    <div class="dropdown">
+                        <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-ellipsis-v"></i>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><a class="dropdown-item" href="{% url 'signature_board_detail' board.pk %}">查看</a></li>
+                            <li><a class="dropdown-item" href="{% url 'create_board_signature' board.pk %}">添加签名</a></li>
+                            <li><a class="dropdown-item" href="{% url 'update_signature_board' board.pk %}">编辑</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item text-danger" href="{% url 'delete_signature_board' board.pk %}">删除</a></li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <p class="card-text">
+                        {{ board.description|truncatechars:100 }}
+                    </p>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span class="badge {% if board.is_active %}bg-success{% else %}bg-danger{% endif %}">
+                            {% if board.is_active %}启用{% else %}禁用{% endif %}
+                        </span>
+                        <small class="text-muted">创建于 {{ board.created_at|date:"Y-m-d" }}</small>
+                    </div>
+                </div>
+                <div class="card-footer">
+                    <div class="btn-group w-100">
+                        <a href="{% url 'signature_board_detail' board.pk %}" class="btn btn-sm btn-outline-primary">
+                            <i class="fas fa-eye"></i> 查看
+                        </a>
+                        <a href="{% url 'create_board_signature' board.pk %}" class="btn btn-sm btn-outline-success">
+                            <i class="fas fa-plus"></i> 添加签名
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-12">
+            <div class="alert alert-info">
+                <i class="fas fa-info-circle"></i> 您还没有创建任何签名墙。点击上方的"创建新签名墙"按钮来创建您的第一个签名墙吧！
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

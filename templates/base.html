@@ -31,8 +31,13 @@
                             签名墙
                         </a>
                         <ul class="dropdown-menu">
-                            <li><a class="dropdown-item" href="{% url 'signature_list' %}">传统签名墙</a></li>
-                            <li><a class="dropdown-item" href="{% url 'signature_board' %}">互动签名板</a></li>
+                            <li><a class="dropdown-item" href="{% url 'signature_board_list' %}">签名墙列表</a></li>
+                            <li><a class="dropdown-item" href="{% url 'signature_board' %}">默认签名墙</a></li>
+                            {% if user.is_authenticated %}
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="{% url 'my_signature_boards' %}">我的签名墙</a></li>
+                            <li><a class="dropdown-item" href="{% url 'create_signature_board' %}">创建新签名墙</a></li>
+                            {% endif %}
                         </ul>
                     </li>
                     <li class="nav-item">
@@ -48,6 +53,8 @@
                             <ul class="dropdown-menu dropdown-menu-end">
                                 <li><a class="dropdown-item" href="{% url 'profile' %}">个人资料</a></li>
                                 <li><a class="dropdown-item" href="{% url 'my_signatures' %}">我的签名</a></li>
+                                <li><a class="dropdown-item" href="{% url 'my_signature_boards' %}">我的签名墙</a></li>
+                                <li><a class="dropdown-item" href="{% url 'my_posts' %}">我的文章</a></li>
                                 <li><a class="dropdown-item" href="{% url 'my_posts' %}">我的文章</a></li>
                                 <li><hr class="dropdown-divider"></li>
                                 <li>
